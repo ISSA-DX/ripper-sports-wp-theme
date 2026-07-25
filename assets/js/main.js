@@ -424,4 +424,353 @@
   }
 
   setActiveNav();
+
+  /* ───────────────────────────────────────────────────────────────────────────
+     CNN-style Live Match Ticker (count-up + count-down clocks)
+     ─────────────────────────────────────────────────────────────────────────── */
+  function initLiveTicker() {
+    const cards = $$('[data-ripper-match]');
+    if (!cards.length) return;
+
+    // No ticking for reduced-motion users.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
+
+    // Track per-card start time so count-up is monotonic.
+    const startedAt = Date.now();
+
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+    function formatMMSS(totalSeconds) {
+      totalSeconds = Math.max(0, Math.floor(totalSeconds));
+      const m = Math.floor(totalSeconds / 60);
+      const s = totalSeconds % 60;
+      return pad(m) + ':' + pad(s);
+    }
+
+    function tick() {
+      const now = Math.floor(Date.now() / 1000);
+      cards.forEach((card) => {
+        const status = card.getAttribute('data-status');
+        const clock  = card.querySelector('[data-ripper-clock]');
+        if (!clock) return;
+
+        const mode = clock.getAttribute('data-ripper-clock');
+        if (mode === 'static') return;
+
+        if (mode === 'down') {
+          const target = parseInt(clock.getAttribute('data-target') || '0', 10);
+          const diff   = Math.max(0, target - now);
+          if (diff <= 0) {
+            // Match has started.
+            card.classList.remove('is-upcoming');
+            card.classList.add('is-live');
+            const pill = card.querySelector('.score-ticker-status-pill');
+            if (pill) {
+              pill.classList.remove('is-upcoming');
+              pill.classList.add('is-live');
+              pill.innerHTML = '<span class="score-ticker-pulse" aria-hidden="true"></span>LIVE';
+            }
+            clock.textContent = '00:00';
+          } else {
+            clock.textContent = formatMMSS(diff);
+          }
+        } else if (mode === 'up') {
+          const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+          clock.textContent = formatMMSS(elapsed);
+        }
+      });
+    }
+
+    tick();
+    setInterval(tick, 1000);
+  }
+
+  initLiveTicker();
+
+  /* ───────────────────────────────────────────────────────────────────────────
+     CNN-style Live Updates Ticker (slide-in notifications)
+     ─────────────────────────────────────────────────────────────────────────── */
+  function initUpdatesTicker() {
+    const root  = $('.js-updates-ticker');
+    if (!root) return;
+
+    const items = $$('.updates-ticker-item', root);
+    if (items.length < 1) return;
+
+    // Respect dismissal for 24h.
+    if (window.RipperStorage && window.RipperStorage.get('updates-dismissed-until')) {
+      const until = parseInt(window.RipperStorage.get('updates-dismissed-until'), 10);
+      if (Date.now() < until) return;
+    }
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
+
+    const closeBtn = $('.js-updates-ticker-close', root);
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        root.hidden = true;
+        if (window.RipperStorage) {
+          window.RipperStorage.set('updates-dismissed-until', String(Date.now() + 24 * 60 * 60 * 1000), 24 * 60 * 60);
+        }
+      });
+    }
+
+    let activeIndex = 0;
+
+    function show(index) {
+      items.forEach((it, i) => {
+        if (i === index) {
+          it.removeAttribute('hidden');
+          // Trigger reflow before adding is-active so the transition fires.
+          void it.offsetWidth;
+          it.classList.add('is-active');
+        } else {
+          it.classList.remove('is-active');
+          // Hide after the transition completes.
+          setTimeout(() => {
+            if (!it.classList.contains('is-active')) it.setAttribute('hidden', '');
+          }, 400);
+        }
+      });
+    }
+
+    function cycle() {
+      activeIndex = (activeIndex + 1) % items.length;
+      show(activeIndex);
+    }
+
+    // Show first item after 5s, then cycle every 4s.
+    setTimeout(() => {
+      root.hidden = false;
+      show(0);
+      setInterval(cycle, 4000);
+    }, 5000);
+  }
+
+  // Tiny storage helper, used by the updates ticker dismissal.
+  if (!window.RipperStorage) {
+    window.RipperStorage = {
+      get: (k) => {
+        const m = document.cookie.match(new RegExp('(?:^|; )' + k + '=([^;]*)'));
+        return m ? decodeURIComponent(m[1]) : null;
+      },
+      set: (k, v, maxAgeSeconds) => {
+        document.cookie = k + '=' + encodeURIComponent(v) + '; max-age=' + maxAgeSeconds + '; path=/; SameSite=Lax';
+      },
+    };
+  }
+
+  function initBackgroundAnimation() {
+    const root = $('[data-bg-animation]');
+    if (!root) return;
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return; // CSS handles static fallback.
+    }
+
+    const balls = $$('.bg-ball', root);
+    if (!balls.length) return;
+
+    // Cache per-ball data so we don't re-read CSS variables on every frame.
+    const items = balls.map((el) => {
+      const cs = getComputedStyle(el);
+      return {
+        el,
+        baseX: parseFloat(cs.left) || 0,
+        baseY: parseFloat(cs.top) || 0,
+        speed: parseFloat(cs.getPropertyValue('--bg-parallax')) || 0.2,
+        rect: el.getBoundingClientRect(),
+        currentDX: 0,
+        currentDY: 0,
+        currentScale: 1,
+        currentGlow: 0, // 0 = no glow, 1 = full gold glow
+      };
+    });
+
+    // Recompute rects on resize.
+    let resizeTO;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTO);
+      resizeTO = setTimeout(() => {
+        items.forEach((it) => { it.rect = it.el.getBoundingClientRect(); });
+      }, 150);
+    });
+
+    const mouse = { x: -9999, y: -9999, active: false };
+    window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true; });
+    window.addEventListener('mouseleave', () => { mouse.x = -9999; mouse.y = -9999; mouse.active = false; });
+    document.addEventListener('mouseleave', () => { mouse.active = false; });
+
+    // rAF loop — one transform write per ball per frame.
+    let ticking = false;
+    function frame() {
+      const scrollY = window.scrollY || window.pageYOffset || 0;
+      for (let i = 0; i < items.length; i++) {
+        const it = items[i];
+        // Parallax drift: each ball moves at its own fraction of scroll.
+        const scrollOffset = scrollY * it.speed;
+
+        // Target scale + glow based on cursor proximity.
+        let targetScale = 1;
+        let targetGlow = 0;
+        let dx = 0, dy = 0;
+
+        if (mouse.active) {
+          const cx = it.rect.left + it.rect.width / 2 - mouse.x;
+          const cy = it.rect.top + it.rect.height / 2 - mouse.y + scrollOffset;
+          const dist = Math.sqrt(cx * cx + cy * cy);
+
+          if (dist < 200) {
+            // Linear ramp: 0 at the edge of 200px, 1 right at the cursor.
+            const proximity = 1 - dist / 200;
+            targetScale = 1 + proximity * 0.15;     // up to 1.15x
+            targetGlow = proximity;                  // up to 1.0
+
+            if (dist < 160) {
+              // Repulsion: stronger push, snappier easing.
+              const force = (1 - dist / 160) * 45;   // up to 45px push
+              dx = (cx / (dist || 1)) * force;
+              dy = (cy / (dist || 1)) * force;
+            }
+          }
+        }
+
+        // Smooth toward target (lerp). Tighter than before for snappier feel.
+        it.currentDX    += (dx      - it.currentDX)    * 0.30;
+        it.currentDY    += (dy      - it.currentDY)    * 0.30;
+        it.currentScale += (targetScale - it.currentScale) * 0.22;
+        it.currentGlow  += (targetGlow  - it.currentGlow)  * 0.25;
+
+        const y = (-scrollOffset + it.currentDY).toFixed(1);
+        const transform = 'translate3d(' + it.currentDX.toFixed(1) + 'px, ' + y + 'px, 0) scale(' + it.currentScale.toFixed(3) + ')';
+        it.el.style.transform = transform;
+        it.el.style.setProperty('--bg-glow', it.currentGlow.toFixed(3));
+      }
+      ticking = false;
+    }
+
+    function onScroll() {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(frame);
+      }
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    // Kick off one frame on init so initial state is correct.
+    requestAnimationFrame(frame);
+  }
+
+  initBackgroundAnimation();
+  initUpdatesTicker();
+
+  /* ───────────────────────────────────────────────────────────────────────────
+     Cursor glow + scroll-tinted gradient
+     ───────────────────────────────────────────────────────────────────────────
+     Two decorative layers stacked on top of the floating sports balls:
+
+     1. The cursor glow is a soft gold/green radial that follows the mouse
+        using eased lerp so the motion feels organic, not snappy. Strength
+        ramps up from 0 to 1 on first mousemove and back to 0 when the
+        cursor leaves the window (no glow on idle screens).
+
+     2. The scroll tint writes a single CSS variable --scroll-progress
+        (0..1) to :root on every scroll, which the .scroll-tint layer
+        uses to interpolate from deep-green at the top to a cool
+        blue-green at the bottom. rAF-throttled so it stays smooth
+        even on long pages.
+
+     Both honor prefers-reduced-motion (the CSS hides them and the JS
+     bails out before doing any work).
+  */
+  function initCursorGlow() {
+    const glow = $('[data-cursor-glow]');
+    if (!glow) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    let targetX = window.innerWidth / 2;
+    let targetY = window.innerHeight / 2;
+    let currentX = targetX;
+    let currentY = targetY;
+    let strength = 0;
+    let targetStrength = 0;
+    let active = false;
+    let raf = 0;
+
+    const tick = () => {
+      // Lerp the cursor toward the target. 0.18 = smooth but responsive.
+      currentX += (targetX - currentX) * 0.18;
+      currentY += (targetY - currentY) * 0.18;
+      strength += (targetStrength - strength) * 0.10;
+
+      glow.style.setProperty('--cursor-x', currentX + 'px');
+      glow.style.setProperty('--cursor-y', currentY + 'px');
+      glow.style.setProperty('--cursor-strength', strength.toFixed(3));
+      if (active || strength > 0.001) {
+        raf = requestAnimationFrame(tick);
+      } else {
+        raf = 0;
+        glow.classList.remove('is-active');
+      }
+    };
+
+    const startLoop = () => {
+      glow.classList.add('is-active');
+      active = true;
+      if (!raf) raf = requestAnimationFrame(tick);
+    };
+
+    window.addEventListener('mousemove', (e) => {
+      targetX = e.clientX;
+      targetY = e.clientY;
+      targetStrength = 1;
+      startLoop();
+    }, { passive: true });
+
+    window.addEventListener('mouseleave', () => {
+      targetStrength = 0;
+      active = false;
+      // tick() will keep running while strength > 0 then stop itself.
+      if (!raf) raf = requestAnimationFrame(tick);
+    });
+
+    // Initial paint so a centered glow exists before the first mousemove.
+    glow.style.setProperty('--cursor-x', currentX + 'px');
+    glow.style.setProperty('--cursor-y', currentY + 'px');
+    glow.style.setProperty('--cursor-strength', '0');
+  }
+
+  function initScrollTint() {
+    const tint = $('[data-scroll-tint]');
+    if (!tint) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    let ticking = false;
+    const update = () => {
+      const doc = document.documentElement;
+      const scrollable = doc.scrollHeight - window.innerHeight;
+      const progress = scrollable > 0
+        ? Math.min(1, Math.max(0, window.scrollY / scrollable))
+        : 0;
+      doc.style.setProperty('--scroll-progress', progress.toFixed(3));
+      ticking = false;
+    };
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    // Kick once so the gradient is correct on initial load.
+    requestAnimationFrame(update);
+  }
+
+  initCursorGlow();
+  initScrollTint();
 })();

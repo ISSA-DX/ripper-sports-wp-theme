@@ -12,7 +12,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Theme version for cache busting.
  */
-define( 'RIPPER_SPORTS_VERSION', '1.0.0' );
+define( 'RIPPER_SPORTS_VERSION', '1.2.0' );
+
+/**
+ * Load theme-specific infrastructure (CPT, meta, helpers, shortcodes).
+ */
+require_once get_template_directory() . '/inc/ripper-sports-cpt.php';
+require_once get_template_directory() . '/inc/ripper-sports-meta.php';
+require_once get_template_directory() . '/inc/ripper-sports-helpers.php';
+require_once get_template_directory() . '/inc/ripper-sports-shortcodes.php';
 
 /**
  * Sets up theme defaults and registers support for various WordPress features.
@@ -106,6 +114,8 @@ function ripper_sports_scripts() {
 			'themeUri' => get_template_directory_uri(),
 			'homeUrl'  => home_url(),
 			'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
+			'restUrl'  => esc_url_raw( rest_url() ),
+			'nonce'    => wp_create_nonce( 'ripper_sports_ajax' ),
 		)
 	);
 }

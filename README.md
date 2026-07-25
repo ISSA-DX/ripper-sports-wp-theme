@@ -16,13 +16,13 @@ A WordPress theme converted from the static Ripper Sports site. It keeps the gre
    - Set **Site Title** to `Ripper Sports`.
    - Set **Tagline** to `Australia's premier destination for bold sports journalism, real-time data, and unmissable highlights.`.
 3. Create these pages:
-   - **About** — use the default page template.
+   - **About** — use the **About** page template.
    - **Contact** — use the **Contact** page template.
    - **Sports** — use the **Sports Directory** page template.
    - **Privacy Policy** — use the default page template.
    - **Terms of Service** — use the default page template.
 4. Go to **Appearance → Menus** and create:
-   - A **Primary** menu with Home, News, Sports, Blog, Contact.
+   - A **Primary** menu with Home, News, Sports, About, Contact.
    - A **Footer** menu with quick links.
 5. Go to **Posts → Categories** or **Posts → Sports** and add sports terms: AFL, NRL, Cricket, Soccer, Basketball, Rugby, Tennis, Motorsport, Golf, Boxing / MMA.
 6. Add posts and assign them a **Sport** so the homepage and archive pages populate automatically.
@@ -51,7 +51,7 @@ A WordPress theme converted from the static Ripper Sports site. It keeps the gre
 - `template-parts/` — Reusable card, single, page, and none components.
 - `assets/css/style.css` + `utilities.css` — Theme styles.
 - `assets/js/main.js` — Theme JavaScript.
-- `assets/images/logo.svg` — Site logo.
+- `assets/images/logo-original.png` — Site logo (400×341 PNG, ~150KB).
 
 ## Notes
 

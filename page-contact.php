@@ -18,7 +18,7 @@ get_header();
       <h1 class="text-display text-cream mb-6"><?php the_title(); ?></h1>
       <?php if ( has_excerpt() ) : ?>
         <div class="text-body-lg text-muted">
-          <?php the_excerpt(); ?
+          <?php the_excerpt(); ?>
         </div>
       <?php else : ?>
         <p class="text-body-lg text-muted">

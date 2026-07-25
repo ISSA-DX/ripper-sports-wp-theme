@@ -105,7 +105,7 @@
   --container-max:  1280px;
 
   /* ── Layout ───────────────────────────────────────────────────────────── */
-  --header-height:        80px;
+  --header-height:        96px;
   --score-ticker-height:  48px;
   --breaking-bar-height:  44px;
 
@@ -634,7 +634,20 @@ button {
   position: relative;
   display: flex;
   flex-direction: column;
-  background-color: var(--rs-primary-container);
+  /* Premium deep-green → gold-tinted diagonal gradient. Built from the
+     existing surface tokens so the design system stays in sync:
+       start: brand-green (#183124) at top-left
+       mid:   primary-container (#152B22)
+       end:   a subtle warm-gold tint at bottom-right */
+  background:
+    linear-gradient(
+      135deg,
+      var(--rs-brand-green) 0%,
+      var(--rs-primary-container) 45%,
+      rgba(255, 217, 150, 0.08) 100%
+    ),
+    var(--rs-primary-container);
+  background-blend-mode: normal;
   border: 1px solid var(--rs-outline-variant);
   border-radius: var(--radius-md);
   overflow: hidden;
@@ -667,11 +680,36 @@ button {
   z-index: 4;
 }
 
+.card::after {
+  /* Inner light — a soft top-left highlight that adds depth on top of
+     the gradient. Static, very subtle. */
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    120% 80% at 0% 0%,
+    rgba(255, 217, 150, 0.06) 0%,
+    transparent 50%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
 .card:hover {
   border-color: rgba(255, 217, 150, 0.4);
   transform: translateY(-6px);
   box-shadow: var(--shadow-3);
-  background-color: var(--rs-surface-container);
+  /* On hover the gradient brightens: deeper green on top, stronger
+     gold tint at the bottom-right. */
+  background:
+    linear-gradient(
+      135deg,
+      var(--rs-surface-container-high) 0%,
+      var(--rs-primary-container) 45%,
+      rgba(255, 217, 150, 0.16) 100%
+    ),
+    var(--rs-primary-container);
 }
 
 .card:hover::before {
@@ -835,6 +873,8 @@ button {
   flex-direction: column;
   flex-grow: 1;
   gap: var(--space-3);
+  position: relative;
+  z-index: 1; /* above the .card::after inner highlight */
 }
 
 .card-category {
@@ -2023,7 +2063,7 @@ button {
 .brand {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   flex-shrink: 0;
   transition: transform var(--transition-fast);
 }
@@ -2031,7 +2071,7 @@ button {
 .brand:hover { transform: scale(1.02); }
 
 .brand-logo {
-  height: 40px;
+  height: 72px;
   width: auto;
   display: block;
 }
@@ -2469,8 +2509,8 @@ button {
 }
 
 .footer-brand-header img {
-  width: 40px;
-  height: 40px;
+  width: 72px;
+  height: 72px;
 }
 
 .footer-brand-header .brand-name {
@@ -3361,8 +3401,8 @@ button {
 }
 
 .mobile-nav-brand img {
-  width: 36px;
-  height: 36px;
+  width: 64px;
+  height: 64px;
 }
 
 .mobile-nav-footer {
@@ -3611,4 +3651,1087 @@ button {
     transform: none !important;
     transition: none !important;
   }
+}
+
+/* ===========================================================
+   47. CNN-STYLE LIVE TICKER (match cards with countdown clock)
+   =========================================================== */
+
+.score-ticker {
+  position: relative;
+  background: linear-gradient(90deg, var(--rs-shield-green) 0%, var(--rs-shield-green-dark, #0a3d2e) 100%);
+  color: var(--rs-cream);
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: stretch;
+  border-bottom: 2px solid var(--rs-gold);
+}
+
+.score-ticker-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 18px;
+  background: var(--rs-error);
+  color: var(--rs-cream);
+  font-weight: 800;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+.score-ticker-pulse {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--rs-cream);
+  box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.6);
+  animation: rs-pulse 1.6s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+@keyframes rs-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.6); }
+  70%  { box-shadow: 0 0 0 8px rgba(255, 255, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+}
+
+.score-ticker-track {
+  display: flex;
+  flex: 1;
+  align-items: stretch;
+  gap: 12px;
+  padding: 12px 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.score-ticker-track::-webkit-scrollbar { display: none; }
+
+.score-ticker-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 220px;
+  max-width: 240px;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 3px solid var(--rs-secondary);
+  border-radius: 4px;
+  position: relative;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.score-ticker-card:hover { background: rgba(0, 0, 0, 0.45); transform: translateY(-1px); }
+.score-ticker-card.is-live  { border-left-color: var(--rs-error); }
+.score-ticker-card.is-final { border-left-color: var(--rs-muted); opacity: 0.85; }
+.score-ticker-card.is-upcoming { border-left-color: var(--rs-gold); }
+
+.score-ticker-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.score-ticker-sport {
+  font-size: 0.68rem;
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-weight: 700;
+}
+
+.score-ticker-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.12);
+}
+.score-ticker-status-pill.is-live {
+  background: var(--rs-error);
+  color: var(--rs-cream);
+}
+.score-ticker-status-pill.is-final { background: var(--rs-muted); color: var(--rs-cream); }
+.score-ticker-status-pill.is-upcoming { background: var(--rs-gold); color: var(--rs-background); }
+
+.score-ticker-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.score-ticker-team {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+.score-ticker-team-name { color: var(--rs-cream); font-weight: 600; }
+.score-ticker-team-score {
+  font-family: var(--rs-font-display, serif);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--rs-cream);
+  min-width: 32px;
+  text-align: right;
+}
+.score-ticker-team-score.is-live {
+  color: var(--rs-gold);
+  animation: rs-flash 2s infinite;
+}
+@keyframes rs-flash {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+
+.score-ticker-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.7rem;
+  color: var(--rs-muted);
+}
+.score-ticker-clock {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color: var(--rs-gold);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+.score-ticker-comp { color: var(--rs-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.65rem; }
+
+/* Mobile: stack label and ticker vertically. */
+@media (max-width: 640px) {
+  .score-ticker { flex-direction: column; }
+  .score-ticker-label { padding: 8px 12px; justify-content: center; }
+  .score-ticker-card { min-width: 180px; max-width: 200px; }
+}
+
+/* ── Sidebar variant ─────────────────────────────────────────
+   Stacked vertical list in the right column. Reuses the
+   `.score-ticker-card` rules above so the JS data-hooks
+   (data-ripper-match / data-ripper-clock) keep working.
+   ──────────────────────────────────────────────────────────── */
+.widget--live-scores {
+  background: linear-gradient(180deg, var(--rs-shield-green) 0%, var(--rs-shield-green-dark, #0a3d2e) 100%);
+  border: 1px solid rgba(255, 217, 150, 0.18);
+  border-left: 3px solid var(--rs-error);
+  border-radius: 4px;
+  padding: 16px 18px 18px;
+  color: var(--rs-cream);
+}
+.widget--live-scores .widget-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 217, 150, 0.18);
+}
+.widget--live-scores .widget-title--inline {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rs-cream);
+  padding: 0;
+  border: 0;
+  flex: 1;
+}
+.widget--live-scores .widget-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--rs-gold);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.widget--live-scores .widget-link:hover { color: var(--rs-cream); }
+
+.live-scores-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.live-scores-card.score-ticker-card {
+  min-width: 0;
+  max-width: none;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.32);
+}
+.live-scores-empty {
+  font-size: 0.85rem;
+  color: var(--rs-muted);
+  margin: 0;
+  padding: 4px 0;
+}
+
+/* Sidebar row: live (large) + trending (compact) sit side-by-side.
+   Live takes ~2/3, trending takes ~1/3 on desktop.
+   Stacks to a single column on mobile. */
+.sidebar-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+@media (min-width: 1024px) {
+  .sidebar-row {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+@media (max-width: 639px) {
+  .sidebar-row { grid-template-columns: 1fr; }
+}
+
+/* Sidebar pair: trending + ripper-report share a 2-col row
+   so the newsletter sits flush beside Trending Now, with
+   editor's picks spanning the full sidebar width below.
+   Trending is 2× the width of Ripper Report. */
+.sidebar-pair {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  align-items: stretch;
+}
+@media (min-width: 1024px) {
+  .sidebar-pair {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+@media (max-width: 639px) {
+  .sidebar-pair { grid-template-columns: 1fr; }
+}
+
+/* Compact newsletter variant — matches the height, padding,
+   and visual weight of the Trending Now widget next to it. */
+.newsletter-box--compact {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+}
+.newsletter-box--compact .widget-title {
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+}
+.newsletter-box--compact p {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  margin-bottom: 10px !important;
+  color: var(--rs-on-surface);
+}
+.newsletter-box--compact .newsletter-inline {
+  margin-top: auto;
+  gap: 8px;
+}
+.newsletter-box--compact .form-input {
+  padding: 8px 10px;
+  font-size: 0.85rem;
+}
+.newsletter-box--compact .btn {
+  padding: 8px 12px;
+  font-size: 0.8rem;
+}
+
+/* ── Full-bleed Live Scores band ─────────────────────────────────
+   The .live-band wrapper is 100% wide (full-bleed dark strip).
+   .live-band-inner is capped at 70vw and centered, so the actual
+   match cards occupy ~70% of the viewport regardless of
+   page-width gutters. */
+.live-band {
+  background: linear-gradient(180deg, var(--rs-shield-green) 0%, var(--rs-shield-green-dark, #0a3d2e) 100%);
+  border-top: 1px solid rgba(255, 217, 150, 0.18);
+  border-bottom: 1px solid rgba(255, 217, 150, 0.18);
+  padding: 18px 0;
+}
+.live-band-inner {
+  width: 100%;
+  max-width: 70vw;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+.live-band .widget--live-scores-band {
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 217, 150, 0.18);
+  border-left: 3px solid var(--rs-error);
+  border-radius: 4px;
+  padding: 16px 18px 18px;
+  color: var(--rs-cream);
+}
+.live-band .live-scores-list--wide {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.live-band .live-scores-list--wide .live-scores-card.score-ticker-card {
+  min-width: 0;
+  max-width: none;
+  width: 100%;
+}
+
+/* On narrow screens the 70vw cap still works but the inner
+   auto-fit grid will collapse to 1 column naturally. */
+@media (max-width: 1023px) {
+  .live-band-inner { max-width: 92vw; }
+}
+
+/* ── Trending Now + Ripper Report — full-width band ──────────
+   Spans the full screen width. Trending Now takes ~2/3 of the
+   container, Ripper Report takes ~1/3. Stacks on tablet/mobile. */
+.trending-newsletter-band {
+  background: linear-gradient(180deg, var(--rs-surface) 0%, var(--rs-surface-dim, #0E1F18) 100%);
+  border-top: 1px solid var(--rs-outline-variant);
+  border-bottom: 1px solid var(--rs-outline-variant);
+  padding: 28px 0;
+}
+.trending-newsletter-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  align-items: stretch;
+}
+@media (min-width: 1024px) {
+  .trending-newsletter-grid {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+@media (max-width: 1023px) {
+  .trending-newsletter-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Trending in the full-width band — normal sizing, no compact. */
+.widget--trending-wide {
+  padding: 18px 20px 16px;
+}
+.widget--trending-wide .widget-title {
+  font-size: 0.95rem;
+  letter-spacing: 0.13em;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  gap: 0.5rem;
+}
+.widget--trending-wide .widget-title svg {
+  width: 18px;
+  height: 18px;
+}
+.widget--trending-wide .trending-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.widget--trending-wide .trending-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--rs-outline-variant);
+}
+.widget--trending-wide .trending-item:last-child { border-bottom: 0; }
+.widget--trending-wide .trending-number {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--rs-gold);
+  line-height: 1;
+  min-width: 32px;
+}
+.widget--trending-wide .trending-category {
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rs-shield-green);
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+.widget--trending-wide .trending-title {
+  font-size: 1rem;
+  line-height: 1.35;
+  color: var(--rs-on-surface);
+  display: block;
+  text-decoration: none;
+  font-weight: 600;
+}
+.widget--trending-wide .trending-title:hover { color: var(--rs-gold); }
+.widget--trending-wide .trending-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: var(--rs-muted);
+}
+
+/* Newsletter in the full-width band — same gradient, comfortable
+   width, the form sits at the bottom so the card stays
+   visually balanced with Trending. */
+.newsletter-box--band {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  padding: 18px 20px 20px;
+}
+.newsletter-box--band .widget-title {
+  font-size: 0.95rem;
+  letter-spacing: 0.13em;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+}
+.newsletter-box--band p {
+  font-size: 0.85rem;
+  line-height: 1.45;
+  margin-bottom: 12px !important;
+  color: var(--rs-on-surface);
+}
+.newsletter-box--band .newsletter-inline {
+  margin-top: auto;
+  gap: 8px;
+}
+.newsletter-box--band .form-input {
+  padding: 10px 12px;
+  font-size: 0.9rem;
+}
+.newsletter-box--band .btn {
+  padding: 10px 16px;
+  font-size: 0.85rem;
+}
+.widget--trending {
+  padding: 14px 14px 12px;
+}
+.widget--trending .widget-title {
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  gap: 0.4rem;
+}
+.widget--trending .widget-title svg {
+  width: 14px;
+  height: 14px;
+}
+.widget--trending .trending-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.widget--trending .trending-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--rs-outline-variant);
+}
+.widget--trending .trending-item:last-child { border-bottom: 0; }
+.widget--trending .trending-number {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--rs-gold);
+  line-height: 1;
+  min-width: 22px;
+}
+.widget--trending .trending-category {
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rs-shield-green);
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.widget--trending .trending-title {
+  font-size: 0.82rem;
+  line-height: 1.3;
+  color: var(--rs-on-surface);
+  display: block;
+  text-decoration: none;
+  font-weight: 600;
+}
+.widget--trending .trending-title:hover { color: var(--rs-gold); }
+.widget--trending .trending-meta {
+  display: none; /* hide the "Xh ago" line to keep it tight */ }
+
+/* Wider Trending Now: when paired with Ripper Report in a
+   2fr 1fr grid the trending column is ~2× wider (~380px at
+   1440 viewport). Bring the meta back and bump typography
+   so the card reads as a normal-width list, not cramped. */
+.sidebar-pair .widget--trending {
+  padding: 16px 18px 14px;
+}
+.sidebar-pair .widget--trending .widget-title {
+  font-size: 0.85rem;
+  letter-spacing: 0.13em;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+}
+.sidebar-pair .widget--trending .widget-title svg {
+  width: 16px;
+  height: 16px;
+}
+.sidebar-pair .widget--trending .trending-list {
+  gap: 10px;
+}
+.sidebar-pair .widget--trending .trending-item {
+  gap: 12px;
+  padding: 8px 0;
+}
+.sidebar-pair .widget--trending .trending-number {
+  font-size: 1.4rem;
+  min-width: 28px;
+}
+.sidebar-pair .widget--trending .trending-category {
+  font-size: 0.7rem;
+  margin-bottom: 3px;
+}
+.sidebar-pair .widget--trending .trending-title {
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+.sidebar-pair .widget--trending .trending-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 0.72rem;
+  color: var(--rs-muted);
+}
+
+/* ===========================================================
+   48. CNN-STYLE FULL-BLEED HERO
+   =========================================================== */
+
+.feature-hero {
+  position: relative;
+  min-height: 78vh;
+  max-height: 880px;
+  display: flex;
+  align-items: flex-end;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--rs-shield-green-dark, #0a3d2e);
+  color: var(--rs-cream);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.feature-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.95) 0%,
+    rgba(0, 0, 0, 0.65) 35%,
+    rgba(0, 0, 0, 0.25) 70%,
+    rgba(0, 0, 0, 0.05) 100%
+  );
+  z-index: 1;
+}
+
+.feature-hero-noise {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  z-index: 1;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  opacity: 0.4;
+}
+
+.feature-hero-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  padding-top: 64px;
+  padding-bottom: 48px;
+  max-width: 920px;
+}
+
+.feature-hero-breaking {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  background: var(--rs-error);
+  color: var(--rs-cream);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.feature-hero-pulse {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--rs-cream);
+  box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.6);
+  animation: rs-pulse 1.6s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+.feature-hero-sport {
+  display: inline-block;
+  padding: 4px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  color: var(--rs-cream);
+  text-decoration: none;
+  margin-bottom: 16px;
+  margin-left: 4px;
+  background: rgba(0, 0, 0, 0.4);
+  border-left: 3px solid currentColor;
+}
+.feature-hero-sport:hover { background: rgba(0, 0, 0, 0.65); }
+
+.feature-hero-title {
+  font-family: var(--rs-font-display, serif);
+  font-size: clamp(2.2rem, 5vw, 4.4rem);
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0 0 24px;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+  max-width: 880px;
+}
+.feature-hero-title a {
+  color: var(--rs-cream);
+  text-decoration: none;
+  background-image: linear-gradient(var(--rs-gold), var(--rs-gold));
+  background-size: 0 4px;
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  transition: background-size 0.4s ease;
+}
+.feature-hero-title a:hover { background-size: 100% 4px; }
+
+.feature-hero-excerpt {
+  font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+  line-height: 1.5;
+  color: var(--rs-cream);
+  opacity: 0.9;
+  max-width: 720px;
+  margin: 0 0 32px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.feature-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.feature-hero-author { display: inline-flex; align-items: center; gap: 10px; }
+.feature-hero-avatar { border-radius: 50%; }
+.feature-hero-author-name { color: var(--rs-cream); font-weight: 600; font-size: 0.92rem; }
+.feature-hero-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--rs-gold);
+  display: inline-block;
+}
+.feature-hero-time { color: var(--rs-muted); font-size: 0.85rem; }
+
+.feature-hero-cta {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--rs-gold);
+  color: var(--rs-background);
+  font-weight: 700;
+  font-size: 0.92rem;
+  border-radius: 2px;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.feature-hero-cta:hover { transform: translateX(2px); box-shadow: 0 6px 18px rgba(255, 196, 0, 0.4); }
+
+@media (max-width: 768px) {
+  .feature-hero { min-height: 60vh; }
+  .feature-hero-cta { margin-left: 0; }
+  .feature-hero-meta { gap: 8px; }
+}
+
+/* ===========================================================
+   49. CNN-STYLE SPORT QUICK-PICK ICON ROW
+   =========================================================== */
+
+.sport-quickpick {
+  background: var(--rs-surface-container);
+  border-bottom: 1px solid var(--rs-outline, rgba(255, 255, 255, 0.08));
+  padding: 18px 0;
+  position: relative;
+  z-index: 5;
+}
+
+.sport-quickpick-track {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 4px 0;
+}
+.sport-quickpick-track::-webkit-scrollbar { display: none; }
+
+.sport-quickpick-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 16px;
+  min-width: 96px;
+  background: var(--rs-surface-container-high, rgba(255, 255, 255, 0.04));
+  border: 1px solid transparent;
+  border-top: 3px solid currentColor;
+  border-radius: 4px;
+  text-decoration: none;
+  color: var(--rs-cream);
+  flex-shrink: 0;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+.sport-quickpick-item:hover {
+  transform: translateY(-3px);
+  background: var(--rs-surface-container-highest, rgba(255, 255, 255, 0.08));
+}
+.sport-quickpick-item.is-active {
+  background: rgba(255, 196, 0, 0.08);
+  border-color: var(--rs-gold);
+}
+
+.sport-quickpick-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  color: currentColor;
+}
+.sport-quickpick-item:hover .sport-quickpick-icon { background: rgba(255, 255, 255, 0.12); }
+
+.sport-quickpick-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .sport-quickpick-item { min-width: 80px; padding: 10px 12px; }
+  .sport-quickpick-label { font-size: 0.72rem; }
+}
+
+/* ===========================================================
+   50. CNN-STYLE LIVE UPDATES TICKER (bottom-left notification)
+   =========================================================== */
+
+.updates-ticker {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  width: 360px;
+  max-width: calc(100vw - 48px);
+  background: var(--rs-surface-container-high, #1a1f1c);
+  border: 1px solid var(--rs-outline, rgba(255, 255, 255, 0.12));
+  border-left: 4px solid var(--rs-gold);
+  border-radius: 6px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  z-index: 90;
+  overflow: hidden;
+  transition: transform 0.4s ease, opacity 0.4s ease;
+  font-family: var(--rs-font-body);
+}
+.updates-ticker[hidden] { display: block; transform: translateX(-120%); opacity: 0; pointer-events: none; }
+
+.updates-ticker-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.updates-ticker-title {
+  flex: 1;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rs-gold);
+}
+
+.updates-ticker-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  color: var(--rs-muted);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.updates-ticker-close:hover { background: rgba(255, 255, 255, 0.08); color: var(--rs-cream); }
+
+.updates-ticker-list {
+  position: relative;
+  min-height: 96px;
+}
+
+.updates-ticker-item {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  text-decoration: none;
+  color: var(--rs-cream);
+  background: transparent;
+  transition: opacity 0.3s ease, transform 0.4s ease;
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+}
+.updates-ticker-item.is-active { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.updates-ticker-item[hidden] { display: flex; }
+
+.updates-ticker-sport {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 2px 8px;
+  border-radius: 2px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--rs-cream);
+  background: rgba(0, 0, 0, 0.3);
+  border-left: 2px solid currentColor;
+}
+
+.updates-ticker-headline {
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.updates-ticker-time {
+  font-size: 0.72rem;
+  color: var(--rs-muted);
+  margin-top: auto;
+}
+
+@media (max-width: 480px) {
+  .updates-ticker { left: 12px; right: 12px; bottom: 12px; width: auto; max-width: none; }
+  :root { --header-height: 80px; }
+  .brand-logo { height: 56px; }
+  .mobile-nav-brand img { width: 56px; height: 56px; }
+}
+
+/* ===========================================================
+   51. FLOATING SPORTS BALLS BACKGROUND ANIMATION
+   ===========================================================
+
+   Decorative fixed-position layer behind page content. 8 hand-
+   drawn sports balls drift with parallax on scroll, rotate
+   slowly, and gently repel from the cursor. Opacity is
+   deliberately low so it reads as ambient texture, not noise.
+
+   JS in main.js (initBackgroundAnimation) drives parallax +
+   cursor repulsion by writing transform deltas to each ball.
+*/
+
+.bg-animation {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.bg-ball {
+  position: absolute;
+  display: block;
+  opacity: 0.05;          /* ambient texture; JS ramps to ~0.10 on cursor hit */
+  filter: blur(0.4px);
+  will-change: transform, filter, opacity;
+  transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  /* Gold glow that fades in when cursor is near.
+     --bg-glow is set per-frame by JS (0 to 1). */
+  --bg-glow: 0;
+  --bg-glow-color: 255, 217, 150;            /* matches --rs-gold */
+  --bg-current-glow: calc(var(--bg-glow) * 0.55);
+  box-shadow:
+    0 0 calc(var(--bg-current-glow) * 30px) calc(var(--bg-current-glow) * 6px) rgba(var(--bg-glow-color), var(--bg-glow)),
+    0 0 calc(var(--bg-current-glow) * 60px) calc(var(--bg-current-glow) * 12px) rgba(var(--bg-glow-color), calc(var(--bg-glow) * 0.4));
+  contain: layout style paint;
+}
+.bg-ball svg { display: block; width: 100%; height: 100%; }
+
+/* Subtle continuous rotation so the layer feels alive even
+   when the user is idle. JS reads --bg-rotation to control
+   speed and direction (positive = CW, negative = CCW). */
+@keyframes bg-ball-spin-cw  { to { transform: rotate(360deg); } }
+@keyframes bg-ball-spin-ccw { to { transform: rotate(-360deg); } }
+.bg-ball--afl,
+.bg-ball--soccer,
+.bg-ball--basketball,
+.bg-ball--cricket { animation: bg-ball-spin-cw  60s linear infinite; }
+.bg-ball--rugby,
+.bg-ball--tennis,
+.bg-ball--baseball,
+.bg-ball--volleyball { animation: bg-ball-spin-ccw 75s linear infinite; }
+
+/* Mobile: dial everything down so the layer doesn't compete
+   with content. */
+@media (max-width: 768px) {
+  .bg-ball { opacity: 0.035; }
+  .bg-ball--tennis,
+  .bg-ball--baseball { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .updates-ticker,
+  .updates-ticker-item,
+  .feature-hero-pulse,
+  .score-ticker-pulse,
+  .score-ticker-team-score.is-live,
+  .bg-ball,
+  .bg-ball--afl, .bg-ball--nrl, .bg-ball--cricket, .bg-ball--soccer,
+  .bg-ball--rugby, .bg-ball--basketball, .bg-ball--tennis,
+  .bg-ball--motorsport, .bg-ball--boxing-mma, .bg-ball--golf,
+  .bg-ball--baseball, .bg-ball--volleyball,
+  .bg-animation { transition: none !important; animation: none !important; }
+  .bg-ball { opacity: 0.04; transform: none !important; }
+  .feature-hero-title a { background-size: 0 0; }
+}
+
+/* ===========================================================
+   52. CURSOR GLOW + SCROLL-TINTED GRADIENT
+   ===========================================================
+
+   Two more decorative layers stacked above the floating balls
+   (z-index: -1) and below all content. Both are pointer-events:
+   none, aria-hidden, and fully disabled when the user prefers
+   reduced motion.
+
+   .cursor-glow  — radial gold/green "torch" that follows the
+                   cursor with eased lerp. Reads as ambient
+                   warmth and gives the page a "live" feel.
+
+   .scroll-tint  — a fixed full-viewport gradient whose hue
+                   shifts with scroll progress (deep-green at
+                   the top → warmer green-gold mid → cool
+                   blue-green at the bottom). Implemented
+                   via the --scroll-progress CSS variable
+                   updated by JS on every scroll event.
+*/
+
+.cursor-glow {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  /* Default position (center) until JS takes over. */
+  --cursor-x: 50vw;
+  --cursor-y: 50vh;
+  --cursor-strength: 0;
+  background: radial-gradient(
+    600px circle at var(--cursor-x) var(--cursor-y),
+    rgba(255, 217, 150, calc(0.18 * var(--cursor-strength))),
+    rgba(12, 120, 70, calc(0.10 * var(--cursor-strength))) 30%,
+    transparent 65%
+  );
+  mix-blend-mode: screen;
+  will-change: background;
+  transition: opacity 200ms ease;
+  opacity: 0;
+  /* Reveal once JS boots so we don't flash an un-centered dot. */
+}
+
+.cursor-glow.is-active {
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .cursor-glow {
+    /* Smaller, less intense on phones — touch users don't get a
+       cursor to follow anyway. */
+    display: none;
+  }
+}
+
+.scroll-tint {
+  position: fixed;
+  inset: 0;
+  z-index: -2;            /* sits behind the cursor glow and the balls */
+  pointer-events: none;
+  overflow: hidden;
+  --scroll-progress: 0;
+  --rs-tint-a: rgba(14, 32, 23, 0.0);                /* deep-green at top    */
+  --rs-tint-b: rgba(12, 120, 70, calc(0.10 * var(--scroll-progress))); /* shield-green mid */
+  --rs-tint-c: rgba(8, 24, 38, calc(0.18 * var(--scroll-progress)));  /* cool blue-green deep */
+  background:
+    linear-gradient(
+      to bottom,
+      var(--rs-tint-a) 0%,
+      var(--rs-tint-b) 40%,
+      var(--rs-tint-c) 100%
+    );
+  will-change: background;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cursor-glow,
+  .scroll-tint { display: none; }
 }

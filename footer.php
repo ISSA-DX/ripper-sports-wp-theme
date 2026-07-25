@@ -32,8 +32,7 @@
     <div class="footer-top">
       <div class="footer-brand">
         <div class="footer-brand-header">
-          <img src="<?php echo esc_url( get_template_directory_uri() . '/assets/images/logo.svg' ); ?>" alt="<?php esc_attr_e( 'Ripper Sports', 'ripper-sports' ); ?>" width="40" height="40">
-          <span class="brand-name"><?php bloginfo( 'name' ); ?></span>
+          <img src="<?php echo esc_url( get_template_directory_uri() . '/assets/images/logo-original.png?v=' . filemtime( get_template_directory() . '/assets/images/logo-original.png' ) ); ?>" alt="<?php esc_attr_e( 'Ripper Sports', 'ripper-sports' ); ?>" width="72" height="72">
         </div>
         <p class="text-body-md footer-mission">
 		  <?php
@@ -62,7 +61,7 @@
 
       <div class="footer-links-col">
         <h3 class="footer-title"><?php esc_html_e( 'Quick Links', 'ripper-sports' ); ?></h3>
-		<?php if ( has_nav_menu( 'footer' ) ) : ?
+		<?php if ( has_nav_menu( 'footer' ) ) : ?>
 		  <?php
 		  wp_nav_menu(
 			  array(
@@ -73,13 +72,13 @@
 				  'depth'          => 1,
 			  )
 		  );
-		  ?
-		<?php else : ?
+		  ?>
+		<?php else : ?>
 		  <ul class="footer-links">
 			<li><a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="footer-link"><?php esc_html_e( 'Home', 'ripper-sports' ); ?></a></li>
 			<li><a href="<?php echo esc_url( get_post_type_archive_link( 'post' ) ); ?>" class="footer-link"><?php esc_html_e( 'Latest News', 'ripper-sports' ); ?></a></li>
 			<li><a href="<?php echo esc_url( get_permalink( get_page_by_path( 'sports' ) ) ); ?>" class="footer-link"><?php esc_html_e( 'All Sports', 'ripper-sports' ); ?></a></li>
-			<li><a href="<?php echo esc_url( get_permalink( get_option( 'page_for_posts' ) ) ); ?>" class="footer-link"><?php esc_html_e( 'The Locker Room', 'ripper-sports' ); ?></a></li>
+			<li><a href="<?php echo esc_url( get_permalink( get_page_by_path( 'about' ) ) ); ?>" class="footer-link"><?php esc_html_e( 'About Us', 'ripper-sports' ); ?></a></li>
 			<li><a href="<?php echo esc_url( get_permalink( get_page_by_path( 'contact' ) ) ); ?>" class="footer-link"><?php esc_html_e( 'Contact Us', 'ripper-sports' ); ?></a></li>
 		  </ul>
 		<?php endif; ?>
@@ -100,14 +99,14 @@
 
 		  if ( ! empty( $footer_sports ) && ! is_wp_error( $footer_sports ) ) :
 			  foreach ( $footer_sports as $sport ) :
-				  ?
+				  ?>
 				  <li><a href="<?php echo esc_url( get_term_link( $sport ) ); ?>" class="footer-link"><?php echo esc_html( $sport->name ); ?></a></li>
 				  <?php
 			  endforeach;
 		  else :
 			  $default_footer_sports = array( 'AFL', 'NRL', 'Cricket', 'Soccer', 'Basketball' );
 			  foreach ( $default_footer_sports as $sport ) :
-				  ?
+				  ?>
 				  <li><a href="<?php echo esc_url( home_url( '/?s=' . rawurlencode( $sport ) ) ); ?>" class="footer-link"><?php echo esc_html( $sport ); ?></a></li>
 				  <?php
 			  endforeach;

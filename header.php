@@ -18,6 +18,16 @@
 <body <?php body_class(); ?>>
 <?php wp_body_open(); ?>
 
+<?php
+/* Decorative floating sports balls (parallax + cursor repulsion).
+   aria-hidden, fixed-position layer behind content. */
+get_template_part( 'template-parts/background-animation' );
+
+/* Cursor-following gold glow + scroll-tinted gradient layer.
+   Sits above the balls but below all content. */
+get_template_part( 'template-parts/cursor-glow' );
+?>
+
 <!-- Skip link for keyboard users -->
 <a href="#main-content" class="skip-link"><?php esc_html_e( 'Skip to content', 'ripper-sports' ); ?></a>
 
@@ -43,8 +53,7 @@ $default_sports = array( 'AFL', 'NRL', 'Cricket', 'Soccer', 'Basketball', 'Rugby
   <div class="container site-header-inner">
     <!-- Brand / logo -->
     <a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="brand" aria-label="<?php esc_attr_e( 'Ripper Sports home', 'ripper-sports' ); ?>">
-      <img src="<?php echo esc_url( get_template_directory_uri() . '/assets/images/logo.svg' ); ?>" alt="<?php esc_attr_e( 'Ripper Sports', 'ripper-sports' ); ?>" class="brand-logo" width="40" height="40">
-      <span class="brand-name"><?php bloginfo( 'name' ); ?></span>
+      <img src="<?php echo esc_url( get_template_directory_uri() . '/assets/images/logo-original.png?v=' . filemtime( get_template_directory() . '/assets/images/logo-original.png' ) ); ?>" alt="<?php esc_attr_e( 'Ripper Sports', 'ripper-sports' ); ?>" class="brand-logo" width="72" height="72">
     </a>
 
     <!-- Primary navigation — desktop mega-menu -->
@@ -97,7 +106,7 @@ $default_sports = array( 'AFL', 'NRL', 'Cricket', 'Soccer', 'Basketball', 'Rugby
             </div>
           </div>
         </li>
-        <li class="primary-nav-item"><a href="<?php echo esc_url( get_permalink( get_option( 'page_for_posts' ) ) ); ?>" class="primary-nav-link js-nav-blog"><?php esc_html_e( 'Blog', 'ripper-sports' ); ?></a></li>
+        <li class="primary-nav-item"><a href="<?php echo esc_url( get_permalink( get_page_by_path( 'about' ) ) ); ?>" class="primary-nav-link js-nav-about"><?php esc_html_e( 'About', 'ripper-sports' ); ?></a></li>
         <li class="primary-nav-item"><a href="<?php echo esc_url( get_permalink( get_page_by_path( 'contact' ) ) ); ?>" class="primary-nav-link js-nav-contact"><?php esc_html_e( 'Contact', 'ripper-sports' ); ?></a></li>
       </ul>
     </nav>
@@ -120,8 +129,7 @@ $default_sports = array( 'AFL', 'NRL', 'Cricket', 'Soccer', 'Basketball', 'Rugby
 <nav id="mobile-nav" class="mobile-nav js-mobile-nav" aria-label="<?php esc_attr_e( 'Mobile navigation', 'ripper-sports' ); ?>">
   <div class="mobile-nav-header">
     <a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="mobile-nav-brand">
-      <img src="<?php echo esc_url( get_template_directory_uri() . '/assets/images/logo.svg' ); ?>" alt="<?php esc_attr_e( 'Ripper Sports', 'ripper-sports' ); ?>" width="36" height="36">
-      <span><?php bloginfo( 'name' ); ?></span>
+      <img src="<?php echo esc_url( get_template_directory_uri() . '/assets/images/logo-original.png?v=' . filemtime( get_template_directory() . '/assets/images/logo-original.png' ) ); ?>" alt="<?php esc_attr_e( 'Ripper Sports', 'ripper-sports' ); ?>" width="64" height="64">
     </a>
     <button class="icon-btn js-mobile-menu-close" aria-label="<?php esc_attr_e( 'Close menu', 'ripper-sports' ); ?>">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
@@ -163,7 +171,7 @@ $default_sports = array( 'AFL', 'NRL', 'Cricket', 'Soccer', 'Basketball', 'Rugby
 		?>
       </ul>
     </li>
-    <li class="mobile-nav-item"><a href="<?php echo esc_url( get_permalink( get_option( 'page_for_posts' ) ) ); ?>" class="mobile-nav-link js-nav-blog"><?php esc_html_e( 'Blog', 'ripper-sports' ); ?></a></li>
+    <li class="mobile-nav-item"><a href="<?php echo esc_url( get_permalink( get_page_by_path( 'about' ) ) ); ?>" class="mobile-nav-link js-nav-about"><?php esc_html_e( 'About', 'ripper-sports' ); ?></a></li>
     <li class="mobile-nav-item"><a href="<?php echo esc_url( get_permalink( get_page_by_path( 'contact' ) ) ); ?>" class="mobile-nav-link js-nav-contact"><?php esc_html_e( 'Contact', 'ripper-sports' ); ?></a></li>
   </ul>
 

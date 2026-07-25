@@ -8,7 +8,12 @@
 $sports     = get_the_terms( get_the_ID(), 'sport' );
 $sport      = ! empty( $sports ) && ! is_wp_error( $sports ) ? $sports[0] : null;
 $tag_label  = $sport ? $sport->name : __( 'News', 'ripper-sports' );
-$hero_image = has_post_thumbnail() ? get_the_post_thumbnail_url( null, 'ripper-hero' ) : 'https://images.unsplash.com/photo-1518605348738-4faafbd0945d?auto=format&fit=crop&w=1600&q=80';
+if ( has_post_thumbnail() ) {
+	$hero_image = get_the_post_thumbnail_url( null, 'ripper-hero' );
+} else {
+	$external   = get_post_meta( get_the_ID(), '_rs_external_image', true );
+	$hero_image = $external ? $external : 'https://images.unsplash.com/photo-1518605348738-4faafbd0945d?auto=format&fit=crop&w=1600&q=80';
+}
 ?>
 
 <!-- Article hero -->
@@ -47,6 +52,14 @@ $hero_image = has_post_thumbnail() ? get_the_post_thumbnail_url( null, 'ripper-h
 
       <!-- Main article -->
       <article class="editorial-content lg-col-span-8">
+        <?php
+        $standfirst = get_post_meta( get_the_ID(), '_rs_standfirst', true );
+        if ( ! empty( $standfirst ) ) :
+          ?>
+          <p class="article-lede text-body-lg text-muted mb-6"><?php echo esc_html( $standfirst ); ?></p>
+          <?php
+        endif;
+        ?>
         <div class="entry-content">
           <?php
           the_content();

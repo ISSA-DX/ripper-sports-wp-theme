@@ -20,9 +20,27 @@ if ( empty( $avatar_url ) ) {
 	$avatar_url = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80';
 }
 
-$like_count    = ( abs( crc32( get_the_ID() . 'like' ) ) % 140 ) + 20;
-$share_count   = ( abs( crc32( get_the_ID() . 'share' ) ) % 30 ) + 1;
+$like_count    = (int) get_post_meta( get_the_ID(), '_rs_like_count', true );
+if ( ! $like_count ) {
+	$like_count = ( abs( crc32( get_the_ID() . 'like' ) ) % 140 ) + 20;
+}
+$share_count   = (int) get_post_meta( get_the_ID(), '_rs_share_count', true );
+if ( ! $share_count ) {
+	$share_count = ( abs( crc32( get_the_ID() . 'share' ) ) % 30 ) + 1;
+}
 $comment_count = get_comments_number();
+
+$card_image = '';
+if ( has_post_thumbnail() ) {
+	$card_image = get_the_post_thumbnail_url( null, 'ripper-card' );
+} else {
+	$external = get_post_meta( get_the_ID(), '_rs_external_image', true );
+	if ( $external ) {
+		$card_image = $external;
+	} else {
+		$card_image = 'https://images.unsplash.com/photo-1518605348738-4faafbd0945d?auto=format&fit=crop&w=800&q=80';
+	}
+}
 ?>
 
 <article class="card">
@@ -30,7 +48,7 @@ $comment_count = get_comments_number();
 		<?php if ( has_post_thumbnail() ) : ?>
 			<?php the_post_thumbnail( 'ripper-card', array( 'alt' => the_title_attribute( array( 'echo' => false ) ) ) ); ?>
 		<?php else : ?>
-			<img src="https://images.unsplash.com/photo-1518605348738-4faafbd0945d?auto=format&fit=crop&w=800&q=80" alt="<?php the_title_attribute(); ?>" loading="lazy">
+			<img src="<?php echo esc_url( $card_image ); ?>" alt="<?php the_title_attribute(); ?>" loading="lazy">
 		<?php endif; ?>
 		<span class="card-tag <?php echo esc_attr( $tag_class ); ?>"><?php echo esc_html( $tag ); ?></span>
 	</a>
