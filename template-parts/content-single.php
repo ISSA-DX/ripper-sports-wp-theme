@@ -118,4 +118,58 @@ $hero_image = has_post_thumbnail() ? get_the_post_thumbnail_url( null, 'ripper-h
       </aside>
     </div>
   </div>
+
+  <?php
+  $related_args = array(
+    'posts_per_page'      => 3,
+    'post_status'         => 'publish',
+    'ignore_sticky_posts' => 1,
+    'post__not_in'        => array( get_the_ID() ),
+  );
+
+  $related_sports = get_the_terms( get_the_ID(), 'sport' );
+  if ( ! empty( $related_sports ) && ! is_wp_error( $related_sports ) ) {
+    $related_args['tax_query'] = array(
+      array(
+        'taxonomy' => 'sport',
+        'field'    => 'slug',
+        'terms'    => $related_sports[0]->slug,
+      ),
+    );
+    $related_link = get_term_link( $related_sports[0] );
+  } else {
+    $related_categories = get_the_category();
+    if ( ! empty( $related_categories ) ) {
+      $related_args['category__in'] = array( $related_categories[0]->term_id );
+    }
+    $related_link = get_post_type_archive_link( 'post' );
+  }
+
+  $related = new WP_Query( $related_args );
+  if ( $related->have_posts() ) :
+    ?>
+    <!-- Related Stories -->
+    <section class="section bg-primary-container">
+      <div class="container">
+        <div class="related-section">
+          <div class="section-header">
+            <h2 class="section-title text-gold"><?php esc_html_e( 'Related Stories', 'ripper-sports' ); ?></h2>
+            <a href="<?php echo esc_url( $related_link ); ?>" class="section-link"><?php esc_html_e( 'View All Editorials', 'ripper-sports' ); ?></a>
+          </div>
+
+          <div class="related-scroll">
+            <?php
+            while ( $related->have_posts() ) :
+              $related->the_post();
+              get_template_part( 'template-parts/content', 'card' );
+            endwhile;
+            wp_reset_postdata();
+            ?>
+          </div>
+        </div>
+      </div>
+    </section>
+    <?php
+  endif;
+  ?>
 </main>

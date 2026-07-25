@@ -327,6 +327,75 @@
   }
 
   /* ───────────────────────────────────────────────────────────────────────────
+     Card bookmarks
+     ─────────────────────────────────────────────────────────────────────────── */
+  $$('.card-bookmark').forEach((btn) => {
+    btn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const isBookmarked = btn.classList.toggle('is-bookmarked');
+      btn.setAttribute('aria-pressed', String(isBookmarked));
+      btn.setAttribute('aria-label', isBookmarked ? 'Remove bookmark' : 'Bookmark article');
+      // eslint-disable-next-line no-console
+      if (typeof console !== 'undefined') {
+        console.log(isBookmarked ? 'Article bookmarked' : 'Bookmark removed');
+      }
+    });
+  });
+
+  /* ───────────────────────────────────────────────────────────────────────────
+     Card reactions
+     ─────────────────────────────────────────────────────────────────────────── */
+  $$('.card-reaction').forEach((btn) => {
+    btn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (btn.dataset.reacted) return;
+      btn.dataset.reacted = 'true';
+      btn.classList.add('is-active');
+      const countEl = btn.querySelector('.card-reaction-count');
+      if (countEl) {
+        const current = parseInt(countEl.textContent.replace(/\D/g, ''), 10) || 0;
+        countEl.textContent = String(current + 1);
+      }
+      setTimeout(() => btn.classList.remove('is-active'), 400);
+    });
+  });
+
+  /* ───────────────────────────────────────────────────────────────────────────
+     Breaking news banner close button
+     ─────────────────────────────────────────────────────────────────────────── */
+  const breakingBar = $('.js-breaking-bar');
+  const breakingClose = $('.js-breaking-bar-close');
+
+  function initBreakingBar() {
+    if (!breakingBar) return;
+    if (sessionStorage.getItem('ripper-breaking-dismissed') === 'true') {
+      breakingBar.classList.add('hidden');
+      return;
+    }
+    breakingBar.classList.remove('hidden');
+  }
+
+  if (breakingClose && breakingBar) {
+    breakingClose.addEventListener('click', () => {
+      breakingBar.classList.add('hidden');
+      sessionStorage.setItem('ripper-breaking-dismissed', 'true');
+    });
+  }
+
+  initBreakingBar();
+
+  /* ───────────────────────────────────────────────────────────────────────────
+     Topic pills
+     ─────────────────────────────────────────────────────────────────────────── */
+  $$('.js-topic-pill').forEach((pill) => {
+    pill.addEventListener('click', () => {
+      pill.classList.toggle('is-active');
+    });
+  });
+
+  /* ───────────────────────────────────────────────────────────────────────────
      Utility: current nav item highlight based on URL
      ─────────────────────────────────────────────────────────────────────────── */
   function setActiveNav() {

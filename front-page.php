@@ -93,6 +93,17 @@ $cricket_posts = ripper_sports_get_sport_posts( 'cricket' );
   </div>
 </div>
 
+<!-- Breaking news banner -->
+<div class="breaking-bar js-breaking-bar" role="region" aria-label="<?php esc_attr_e( 'Breaking news', 'ripper-sports' ); ?>">
+  <span class="breaking-bar-label"><?php esc_html_e( 'Breaking', 'ripper-sports' ); ?></span>
+  <div class="breaking-bar-track">
+    <span class="breaking-bar-headline"><?php esc_html_e( 'BREAKING: Dockers stun Eagles with final-second goal in the Western Derby', 'ripper-sports' ); ?></span>
+  </div>
+  <button class="breaking-bar-close js-breaking-bar-close" type="button" aria-label="<?php esc_attr_e( 'Dismiss breaking news', 'ripper-sports' ); ?>">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+  </button>
+</div>
+
 <main id="main-content">
 
   <!-- Hero + sidebar -->
@@ -103,10 +114,12 @@ $cricket_posts = ripper_sports_get_sport_posts( 'cricket' );
           <?php
           $hero_post->the_post();
           $hero_image = has_post_thumbnail() ? get_the_post_thumbnail_url( null, 'ripper-hero' ) : 'https://images.unsplash.com/photo-1518605348738-4faafbd0945d?auto=format&fit=crop&w=1600&q=80';
-          $hero_tag   = __( 'Exclusive', 'ripper-sports' );
-          $sports     = get_the_terms( get_the_ID(), 'sport' );
+          $hero_tag       = __( 'Exclusive', 'ripper-sports' );
+          $hero_tag_class = 'hero-tag';
+          $sports         = get_the_terms( get_the_ID(), 'sport' );
           if ( ! empty( $sports ) && ! is_wp_error( $sports ) ) {
-            $hero_tag = $sports[0]->name;
+            $hero_tag       = $sports[0]->name;
+            $hero_tag_class = 'hero-tag hero-tag--exclusive';
           }
           ?>
           <article class="hero">
@@ -114,7 +127,7 @@ $cricket_posts = ripper_sports_get_sport_posts( 'cricket' );
               <div class="hero-bg" style="background-image: url('<?php echo esc_url( $hero_image ); ?>');" aria-hidden="true"></div>
               <div class="hero-overlay" aria-hidden="true"></div>
               <div class="hero-content">
-                <span class="hero-tag"><?php echo esc_html( $hero_tag ); ?></span>
+                <span class="<?php echo esc_attr( $hero_tag_class ); ?>"><?php echo esc_html( $hero_tag ); ?></span>
                 <h1 class="hero-title"><?php the_title(); ?></h1>
                 <p class="hero-excerpt"><?php echo esc_html( wp_trim_words( get_the_excerpt(), 28 ) ); ?></p>
               </div>
@@ -151,6 +164,10 @@ $cricket_posts = ripper_sports_get_sport_posts( 'cricket' );
                     <div>
                       <div class="trending-category"><?php echo esc_html( $sport_name ); ?></div>
                       <a href="<?php the_permalink(); ?>" class="trending-title"><?php the_title(); ?></a>
+                      <div class="trending-meta">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                        <?php echo esc_html( human_time_diff( get_the_time( 'U' ), current_time( 'U' ) ) . ' ' . __( 'ago', 'ripper-sports' ) ); ?>
+                      </div>
                     </div>
                   </li>
                   <?php
@@ -160,6 +177,62 @@ $cricket_posts = ripper_sports_get_sport_posts( 'cricket' );
               endif;
               ?>
             </ul>
+          </div>
+
+          <div class="widget widget--editors-picks">
+            <h3 class="widget-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <?php esc_html_e( "Editor's Picks", 'ripper-sports' ); ?>
+            </h3>
+            <div class="flex flex-col gap-4">
+              <?php
+              $editors_picks = new WP_Query(
+                array(
+                  'posts_per_page'      => 3,
+                  'post_status'         => 'publish',
+                  'ignore_sticky_posts' => 1,
+                )
+              );
+              if ( $editors_picks->have_posts() ) :
+                while ( $editors_picks->have_posts() ) :
+                  $editors_picks->the_post();
+                  $ep_sports     = get_the_terms( get_the_ID(), 'sport' );
+                  $ep_sport      = ! empty( $ep_sports ) && ! is_wp_error( $ep_sports ) ? $ep_sports[0] : null;
+                  $ep_tag        = $ep_sport ? $ep_sport->name : __( 'News', 'ripper-sports' );
+                  $ep_tag_class  = $ep_sport ? sanitize_html_class( 'card-tag--' . $ep_sport->slug ) : 'card-tag--analysis';
+                  $ep_image      = has_post_thumbnail() ? get_the_post_thumbnail_url( null, 'ripper-card' ) : 'https://images.unsplash.com/photo-1518605348738-4faafbd0945d?auto=format&fit=crop&w=400&q=80';
+                  $ep_like_count = ( abs( crc32( get_the_ID() . 'like' ) ) % 140 ) + 20;
+                  ?>
+                  <article class="card card-list">
+                    <a href="<?php the_permalink(); ?>" class="card-image">
+                      <img src="<?php echo esc_url( $ep_image ); ?>" alt="<?php the_title_attribute(); ?>" loading="lazy">
+                    </a>
+                    <div class="card-body">
+                      <span class="card-tag <?php echo esc_attr( $ep_tag_class ); ?>"><?php echo esc_html( $ep_tag ); ?></span>
+                      <span class="card-category"><?php echo esc_html( $ep_tag ); ?></span>
+                      <h3 class="card-title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
+                      <div class="card-meta">
+                        <div class="card-meta-left">
+                          <span class="editors-stamp">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            <?php esc_html_e( "Editor's Pick", 'ripper-sports' ); ?>
+                          </span>
+                        </div>
+                        <div class="card-meta-right">
+                          <span class="card-reaction" aria-label="<?php esc_attr_e( 'Like article', 'ripper-sports' ); ?>">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                            <span class="card-reaction-count"><?php echo esc_html( $ep_like_count ); ?></span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                  <?php
+                endwhile;
+                wp_reset_postdata();
+              endif;
+              ?>
+            </div>
           </div>
 
           <div class="newsletter-box" id="newsletter">

@@ -14,6 +14,24 @@ get_header();
       <h1 class="section-title"><?php single_post_title(); ?></h1>
     </header>
 
+    <?php
+    $sport_terms = get_terms(
+      array(
+        'taxonomy'   => 'sport',
+        'hide_empty' => true,
+      )
+    );
+    if ( ! empty( $sport_terms ) && ! is_wp_error( $sport_terms ) ) :
+      ?>
+      <div class="topic-pills mb-8" aria-label="<?php esc_attr_e( 'Topics', 'ripper-sports' ); ?>">
+        <?php foreach ( $sport_terms as $sport_term ) : ?>
+          <button class="tag js-topic-pill" type="button"><?php echo esc_html( $sport_term->name ); ?></button>
+        <?php endforeach; ?>
+      </div>
+      <?php
+    endif;
+    ?>
+
     <div class="grid-auto">
       <?php
       if ( have_posts() ) :
