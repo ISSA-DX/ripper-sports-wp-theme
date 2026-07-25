@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Ripper Sports shield logo">
+  <path d="M32 4L8 14v16c0 14 10 26 24 30 14-4 24-16 24-30V14L32 4z" fill="#0C7846" stroke="#FFD996" stroke-width="2"/>
+  <path d="M32 12L16 19v10c0 10 7 19 16 22 9-3 16-12 16-22V19L32 12z" fill="#183124"/>
+  <text x="32" y="38" text-anchor="middle" font-family="Oswald, sans-serif" font-size="22" font-weight="700" fill="#FFD996">R</text>
+</svg>
