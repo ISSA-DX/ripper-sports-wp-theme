@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Theme version for cache busting.
  */
-define( 'RIPPER_SPORTS_VERSION', '1.2.0' );
+define( 'RIPPER_SPORTS_VERSION', '1.4.2' );
 
 /**
  * Load theme-specific infrastructure (CPT, meta, helpers, shortcodes).

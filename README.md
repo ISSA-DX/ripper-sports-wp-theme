@@ -24,7 +24,7 @@ A WordPress theme converted from the static Ripper Sports site. It keeps the gre
 4. Go to **Appearance → Menus** and create:
    - A **Primary** menu with Home, News, Sports, About, Contact.
    - A **Footer** menu with quick links.
-5. Go to **Posts → Categories** or **Posts → Sports** and add sports terms: AFL, NRL, Cricket, Soccer, Basketball, Rugby, Tennis, Motorsport, Golf, Boxing / MMA.
+5. Go to **Posts → Categories** or **Posts → Sports** and add sports terms: AFL, NRL, Cricket, Soccer, Basketball, Rugby, Tennis, Motorsport, Golf, Individual Sport.
 6. Add posts and assign them a **Sport** so the homepage and archive pages populate automatically.
 
 ## Features

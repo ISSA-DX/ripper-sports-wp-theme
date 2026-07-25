@@ -276,55 +276,208 @@
 
   /* ───────────────────────────────────────────────────────────────────────────
      Header scroll behavior
-     ─────────────────────────────────────────────────────────────────────────── */
+     ───────────────────────────────────────────────────────────────────────────
+     Two responsibilities:
+       1. Toggle `.scrolled` (compact shadow) past 20px.
+       2. Scroll-direction show/hide:
+            - On scroll DOWN past 120px, header slides out (is-hidden)
+            - On scroll UP, header slides back in (is-revealed briefly)
+            - Near the top of the page, always visible
+            - Touch devices: never hide (no wheel-flicking the same way)
+            - prefers-reduced-motion: CSS pins transform:none, so
+              is-hidden becomes a no-op visually
+  */
   const siteHeader = $('.js-site-header');
+  let lastHeaderScrollY = window.scrollY || 0;
+  let lastHeaderDirection = 'up';
+  let isTouchNoHover = window.matchMedia('(hover: none)').matches;
 
   function updateHeader() {
     if (!siteHeader) return;
-    siteHeader.classList.toggle('scrolled', window.scrollY > 20);
+    const y = window.scrollY;
+
+    // 1. Compact-on-scroll
+    siteHeader.classList.toggle('scrolled', y > 20);
+
+    // 2. Direction-based hide/show — only above the 120px dead zone
+    if (y < 120) {
+      siteHeader.classList.remove('is-hidden');
+      lastHeaderScrollY = y;
+      return;
+    }
+    // Touch devices keep the header always visible
+    if (isTouchNoHover) {
+      lastHeaderScrollY = y;
+      return;
+    }
+
+    const direction = y > lastHeaderScrollY ? 'down' : 'up';
+    if (direction !== lastHeaderDirection) {
+      lastHeaderDirection = direction;
+      if (direction === 'down') {
+        siteHeader.classList.add('is-hidden');
+      } else {
+        siteHeader.classList.remove('is-hidden');
+        siteHeader.classList.add('is-revealed');
+        // Drop the is-revealed glow after the slide-in finishes
+        setTimeout(() => siteHeader.classList.remove('is-revealed'), 600);
+      }
+    }
+    lastHeaderScrollY = y;
   }
 
   window.addEventListener('scroll', updateHeader, { passive: true });
+  // Recompute touch detection on resize (e.g. plugging in a mouse)
+  window.addEventListener('resize', () => {
+    isTouchNoHover = window.matchMedia('(hover: none)').matches;
+  }, { passive: true });
   updateHeader();
 
   /* ───────────────────────────────────────────────────────────────────────────
      Scroll reveal animations
      ─────────────────────────────────────────────────────────────────────────── */
   const revealElements = $$('.reveal, .reveal-scale, .reveal-left, .reveal-right, .reveal-stagger');
-  if (revealElements.length && 'IntersectionObserver' in window) {
+  const sectionElements = $$('.section');
+  const combinedReveal = revealElements.concat(sectionElements);
+  if (combinedReveal.length && 'IntersectionObserver' in window) {
     const revealObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             entry.target.classList.add('is-visible');
+            // Sections also receive 'is-entered' which powers the
+            // gold edge-glow pseudo (CSS section 53.6).
+            if (entry.target.classList.contains('section')) {
+              entry.target.classList.add('is-entered');
+            }
             revealObserver.unobserve(entry.target);
           }
         });
       },
       { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
     );
-    revealElements.forEach((el) => revealObserver.observe(el));
+    combinedReveal.forEach((el) => revealObserver.observe(el));
   } else {
-    revealElements.forEach((el) => el.classList.add('is-visible'));
+    combinedReveal.forEach((el) => el.classList.add('is-visible'));
   }
 
   /* ───────────────────────────────────────────────────────────────────────────
-     Archive filter checkboxes (client-side demo filtering)
+     Archive filter chips (sport taxonomy archive)
+     Single-select within each filter group, instant client-side filtering.
      ─────────────────────────────────────────────────────────────────────────── */
-  const archiveFilters = $$('.js-archive-filter');
-  if (archiveFilters.length) {
-    archiveFilters.forEach((filter) => {
-      filter.addEventListener('change', () => {
-        const checked = archiveFilters.filter((f) => f.checked).map((f) => f.value);
-        const items = $$('.js-archive-item');
-        items.forEach((item) => {
-          const category = item.dataset.category;
-          const visible = checked.length === 0 || checked.includes(category);
-          item.style.display = visible ? '' : 'none';
-        });
+  function initArchiveFilters() {
+    const chips = $$('.js-filter-chip, .filter-chip[data-filter-group]');
+    if (!chips.length) return;
+    const items = $$('.js-archive-item');
+    if (!items.length) return;
+    const countEl = $('.js-visible-count');
+    const clearBtn = $('.js-filter-clear');
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Active state — one value per group, or '' for the "All" chip.
+    const active = { category: '', tag: '', date: 'all' };
+
+    function matchesDate(dateAttr, range) {
+      if (range === 'all' || !dateAttr) return true;
+      const ts = parseInt(dateAttr, 10);
+      if (!ts) return true;
+      const now = Math.floor(Date.now() / 1000);
+      if (range === 'week') return (now - ts) <= 7 * 24 * 60 * 60;
+      if (range === 'month') return (now - ts) <= 30 * 24 * 60 * 60;
+      if (range === 'season') {
+        const yearStart = Math.floor(new Date(new Date().getFullYear(), 0, 1).getTime() / 1000);
+        return ts >= yearStart;
+      }
+      return true;
+    }
+
+    function matchesTags(tagAttr, wanted) {
+      if (!wanted) return true;
+      if (!tagAttr) return false;
+      return tagAttr.split(',').indexOf(wanted) !== -1;
+    }
+
+    function matchesCats(catAttr, wanted) {
+      if (!wanted) return true;
+      if (!catAttr) return false;
+      const wantedId = String(wanted);
+      return catAttr.split(',').indexOf(wantedId) !== -1;
+    }
+
+    function apply() {
+      let visible = 0;
+      items.forEach((item) => {
+        const match =
+          matchesCats(item.dataset.cats, active.category) &&
+          matchesTags(item.dataset.tags, active.tag) &&
+          matchesDate(item.dataset.date, active.date);
+        if (match) {
+          visible++;
+          item.style.display = '';
+          item.classList.remove('is-filtered-out');
+        } else {
+          item.style.display = 'none';
+          if (!reduceMotion) {
+            item.classList.add('is-filtered-out');
+          }
+        }
+      });
+
+      // Update count label.
+      if (countEl) {
+        const total = items.length;
+        const noun = total === 1 ? 'story' : 'stories';
+        countEl.textContent = visible + ' of ' + total + ' ' + noun;
+      }
+
+      // Toggle the "Clear all" button.
+      if (clearBtn) {
+        const hasActive = !!(active.category || active.tag) || active.date !== 'all';
+        clearBtn.hidden = !hasActive;
+      }
+    }
+
+    function setActive(group, value, sourceChip) {
+      active[group] = value;
+      // Update visual active state on chips within the same group.
+      const groupChips = $$('.filter-chip[data-filter-group="' + group + '"]');
+      groupChips.forEach((c) => c.classList.toggle('is-active', c === sourceChip));
+      apply();
+    }
+
+    // Wire chip clicks.
+    chips.forEach((chip) => {
+      chip.addEventListener('click', (event) => {
+        event.preventDefault();
+        const group = chip.dataset.filterGroup;
+        if (!group) return;
+        if (group === 'category') setActive('category', chip.dataset.filterCat || '', chip);
+        else if (group === 'tag') setActive('tag', chip.dataset.filterTag || '', chip);
+        else if (group === 'date') setActive('date', chip.dataset.filterDate || 'all', chip);
       });
     });
+
+    // Wire clear-all.
+    if (clearBtn) {
+      clearBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        active.category = '';
+        active.tag = '';
+        active.date = 'all';
+        // Reset visual active states.
+        $$('.filter-chip[data-filter-group]').forEach((c) => {
+          const g = c.dataset.filterGroup;
+          if (g === 'date') c.classList.toggle('is-active', c.dataset.filterDate === 'all');
+          else c.classList.toggle('is-active', c.dataset.filterCat === '' || c.dataset.filterTag === '');
+        });
+        apply();
+      });
+    }
+
+    // Initial pass — sets the count label to the right "X of X" baseline.
+    apply();
   }
+  initArchiveFilters();
 
   /* ───────────────────────────────────────────────────────────────────────────
      Card bookmarks
@@ -773,4 +926,241 @@
 
   initCursorGlow();
   initScrollTint();
+
+  /* ───────────────────────────────────────────────────────────────────────────
+     Scroll-driven motion layer (5 systems, one rAF loop)
+     ───────────────────────────────────────────────────────────────────────────
+     Runs in its own rAF, parallel to the background-balls loop (which
+     already owns a tight tick for parallax/repulsion). Sharing one loop
+     would couple ball-parallax to every other motion system and bloat
+     frame() — easier to keep this self-contained.
+
+     1. Section drift        — .section[data-drift] translateY by velocity
+     2. Card parallax        — .card[data-parallax] .card-image > * translateY
+     3. 3D featured tilt     — .card-featured perspective + rotateX/rotateY
+     4. Section title fade   — .section-title opacity as it leaves top
+     5. (handled by initStatCounters + reveal IO, not the rAF)
+  */
+  function initScrollMotion() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const driftSections   = $$('.section[data-drift]');
+    const parallaxCards   = $$('.card[data-parallax]');
+    const featuredCards   = $$('.card-featured');
+    const sectionTitles   = $$('.section-title');
+
+    if (!driftSections.length && !parallaxCards.length && !featuredCards.length && !sectionTitles.length) {
+      return; // nothing to do on this page
+    }
+
+    // Shared pointer state. pointermove only updates the object; the
+    // actual transform write happens in frame().
+    const pointer = { x: 0, y: 0, active: false };
+    window.addEventListener('pointermove', (e) => {
+      pointer.x = e.clientX;
+      pointer.y = e.clientY;
+      pointer.active = true;
+    }, { passive: true });
+    window.addEventListener('pointerleave', () => { pointer.active = false; });
+
+    // Build cached state for each tracked group.
+    const sections = driftSections.map((el) => ({
+      el,
+      speed: parseFloat(el.getAttribute('data-drift')) || 0.04,
+      current: 0,
+      target: 0,
+    }));
+
+    const parallaxItems = [];
+    parallaxCards.forEach((card) => {
+      const speed = parseFloat(card.getAttribute('data-parallax')) || 0.1;
+      const inner = card.querySelector('.card-image');
+      if (!inner) return;
+      // Drift the first painted child (img / svg).
+      const child = inner.firstElementChild;
+      if (!child) return;
+      parallaxItems.push({ el: child, speed, current: 0 });
+    });
+
+    const featuredItems = featuredCards.map((card) => {
+      const rect = () => card.getBoundingClientRect();
+      return {
+        el: card,
+        rect, // function so we read fresh per frame
+        currentX: 0,
+        currentY: 0,
+      };
+    });
+
+    const titles = sectionTitles.map((el) => {
+      // Bind to the nearest .section so we know when the title is leaving
+      // the section. If it lives directly inside a .section, use that.
+      const section = el.closest('.section') || el.parentElement;
+      return {
+        el,
+        section,
+        current: 1,
+      };
+    });
+
+    let lastScrollY = window.scrollY || 0;
+    let lastT = performance.now();
+    let ticking = false;
+
+    function frame(now) {
+      const scrollY = window.scrollY || 0;
+      const dt = Math.max(1, now - lastT);
+      lastT = now;
+
+      // 1. Section drift — velocity-based, lerp-smoothed, clamped.
+      for (let i = 0; i < sections.length; i++) {
+        const s = sections[i];
+        const velocity = (scrollY - lastScrollY) / dt; // px / ms
+        // Scale velocity to a reasonable target. Cap at ±1.5 px/ms.
+        const v = Math.max(-1.5, Math.min(1.5, velocity));
+        s.target = Math.max(-24, Math.min(24, v * s.speed * 60));
+        // Lerp toward target.
+        s.current += (s.target - s.current) * 0.12;
+        // Use a CSS variable so the CSS owns the transform binding.
+        s.el.style.setProperty('--drift-current', s.current.toFixed(2) + 'px');
+      }
+
+      // 2. Card parallax — child image drifts against page scroll.
+      for (let i = 0; i < parallaxItems.length; i++) {
+        const it = parallaxItems[i];
+        it.current += (scrollY * it.speed - it.current) * 0.18;
+        it.el.style.transform = 'translate3d(0,' + (-it.current).toFixed(2) + 'px,0)';
+      }
+
+      // 3. 3D tilt on featured cards — pointer drives target, lerp smooths.
+      if (pointer.active) {
+        for (let i = 0; i < featuredItems.length; i++) {
+          const f = featuredItems[i];
+          const r = f.rect();
+          if (r.width === 0) continue; // hidden
+          const halfW = r.width / 2;
+          const halfH = r.height / 2;
+          const cx = r.left + halfW;
+          const cy = r.top + halfH;
+          const dx = (pointer.x - cx) / halfW;   // -1..1
+          const dy = (pointer.y - cy) / halfH;   // -1..1
+          const targetX = Math.max(-1, Math.min(1, dx)) * 6; // ±6deg
+          const targetY = Math.max(-1, Math.min(1, dy)) * 6;
+          f.currentX += (targetX - f.currentX) * 0.18;
+          f.currentY += (targetY - f.currentY) * 0.18;
+          f.el.style.setProperty('--tilt-x', (-f.currentY).toFixed(2) + 'deg'); // rotateX = -dy
+          f.el.style.setProperty('--tilt-y', f.currentX.toFixed(2) + 'deg');    // rotateY =  dx
+        }
+      } else {
+        // Pointer not active — relax to flat.
+        for (let i = 0; i < featuredItems.length; i++) {
+          const f = featuredItems[i];
+          f.currentX += (0 - f.currentX) * 0.12;
+          f.currentY += (0 - f.currentY) * 0.12;
+          f.el.style.setProperty('--tilt-x', f.currentY.toFixed(2) + 'deg');
+          f.el.style.setProperty('--tilt-y', f.currentX.toFixed(2) + 'deg');
+        }
+      }
+
+      // 4. Section-title fade — fades as the section's top crosses above
+      //    the viewport top by more than 80px.
+      for (let i = 0; i < titles.length; i++) {
+        const t = titles[i];
+        if (!t.section) continue;
+        const r = t.section.getBoundingClientRect();
+        // When the section's top is 80px above the viewport, opacity ~ 0.
+        const opacity = Math.max(0, Math.min(1, (r.top + 80) / 80));
+        if (Math.abs(opacity - t.current) > 0.01) {
+          t.current = opacity;
+          t.el.style.opacity = opacity.toFixed(3);
+          t.el.style.transform = 'translateY(' + ((1 - opacity) * -8).toFixed(2) + 'px)';
+        }
+      }
+
+      lastScrollY = scrollY;
+      ticking = false;
+    }
+
+    function onScroll() {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(frame);
+      }
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    // Kick one frame so initial state is correct.
+    requestAnimationFrame(frame);
+  }
+
+  initScrollMotion();
+
+  /* ───────────────────────────────────────────────────────────────────────────
+     Stat value count-up
+     ───────────────────────────────────────────────────────────────────────────
+     For each .stat-value[data-counter] (with a numeric data-counter-target
+     and optional data-counter-suffix like '+' or '%'), animate 0 → target
+     over ~1200ms with easeOutCubic when the element first enters the
+     viewport. The reveal IntersectionObserver in this file already fires
+     when sections come into view — we re-use the same threshold by
+     observing all .stat-value elements directly.
+  */
+  function initStatCounters() {
+    const counters = $$('.stat-value[data-counter]');
+    if (!counters.length) return;
+    if (!('IntersectionObserver' in window)) {
+      // No IO support — just reveal at final value.
+      counters.forEach(revealFinal);
+      return;
+    }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      counters.forEach(revealFinal);
+      return;
+    }
+
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const el = entry.target;
+        io.unobserve(el);
+        animate(el);
+      });
+    }, { threshold: 0.4 });
+
+    counters.forEach((el) => io.observe(el));
+
+    function animate(el) {
+      if (el.children.length > 0) return; // defensive — don't clobber children
+      const target = parseFloat(el.getAttribute('data-counter-target')) || 0;
+      const suffix = el.getAttribute('data-counter-suffix') || '';
+      const dur = 1200;
+      const start = performance.now();
+
+      function step(now) {
+        const t = Math.min(1, (now - start) / dur);
+        const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
+        const value = Math.round(eased * target);
+        el.textContent = value + suffix;
+        if (t < 1) {
+          requestAnimationFrame(step);
+        } else {
+          el.classList.add('is-counted');
+        }
+      }
+      // Set visible immediately so the count is visible during the tween.
+      el.classList.add('is-counted');
+      el.textContent = '0' + suffix;
+      requestAnimationFrame(step);
+    }
+
+    function revealFinal(el) {
+      if (el.children.length > 0) return;
+      const target = parseFloat(el.getAttribute('data-counter-target')) || 0;
+      const suffix = el.getAttribute('data-counter-suffix') || '';
+      el.textContent = target + suffix;
+      el.classList.add('is-counted');
+    }
+  }
+
+  initStatCounters();
 })();

@@ -12,6 +12,13 @@ $sport      = ! empty( $sports ) && ! is_wp_error( $sports ) ? $sports[0] : null
 $tag        = $sport ? $sport->name : ( $category ? $category->name : __( 'News', 'ripper-sports' ) );
 $tag_class  = $sport ? sanitize_html_class( 'card-tag--' . $sport->slug ) : 'card-tag--analysis';
 
+// Archive-filter data (used by the sport sidebar filter on taxonomy-sport.php).
+$filter_cats = wp_get_post_terms( get_the_ID(), 'category', array( 'fields' => 'ids' ) );
+$filter_tags = wp_get_post_terms( get_the_ID(), 'post_tag', array( 'fields' => 'slugs' ) );
+if ( is_wp_error( $filter_cats ) ) { $filter_cats = array(); }
+if ( is_wp_error( $filter_tags ) ) { $filter_tags = array(); }
+$filter_date = get_the_date( 'U' );
+
 $avatar_url = get_avatar_url(
 	get_the_author_meta( 'ID' ),
 	array( 'size' => 44 )
@@ -43,7 +50,7 @@ if ( has_post_thumbnail() ) {
 }
 ?>
 
-<article class="card">
+<article class="card js-archive-item" data-cats="<?php echo esc_attr( implode( ',', $filter_cats ) ); ?>" data-tags="<?php echo esc_attr( implode( ',', $filter_tags ) ); ?>" data-date="<?php echo esc_attr( (string) $filter_date ); ?>">
 	<a href="<?php the_permalink(); ?>" class="card-image">
 		<?php if ( has_post_thumbnail() ) : ?>
 			<?php the_post_thumbnail( 'ripper-card', array( 'alt' => the_title_attribute( array( 'echo' => false ) ) ) ); ?>

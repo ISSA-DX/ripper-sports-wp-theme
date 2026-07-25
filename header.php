@@ -45,7 +45,7 @@ $sports_terms = get_terms(
 	)
 );
 $has_sports   = ! empty( $sports_terms ) && ! is_wp_error( $sports_terms );
-$default_sports = array( 'AFL', 'NRL', 'Cricket', 'Soccer', 'Basketball', 'Rugby', 'Tennis', 'Motorsport', 'Golf', 'Boxing / MMA' );
+$default_sports = array( 'AFL', 'NRL', 'Cricket', 'Soccer', 'Basketball', 'Rugby', 'Tennis', 'Motorsport', 'Golf', 'Individual Sport' );
 ?>
 
 <!-- Site header -->
@@ -120,6 +120,39 @@ $default_sports = array( 'AFL', 'NRL', 'Cricket', 'Soccer', 'Basketball', 'Rugby
       <button class="icon-btn mobile-menu-btn js-mobile-menu-open" aria-label="<?php esc_attr_e( 'Open menu', 'ripper-sports' ); ?>" aria-expanded="false" aria-controls="mobile-nav">
         <span class="hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
       </button>
+    </div>
+  </div>
+
+  <!-- Accent strip — date / tagline / live indicator -->
+  <div class="header-accent-strip">
+    <div class="container header-accent-strip-inner">
+      <div class="accent-cell accent-cell--date">
+        <span class="accent-pulse" aria-hidden="true"></span>
+        <span class="accent-text"><?php echo esc_html( strtoupper( gmdate( 'D &#183; j M' ) ) ); ?></span>
+      </div>
+      <div class="accent-cell accent-cell--tagline">
+        <?php
+        // Get the most recent post title, fall back to the morning report copy.
+        $ripper_accent_latest = get_posts(
+          array(
+            'numberposts' => 1,
+            'post_status' => 'publish',
+          )
+        );
+        if ( ! empty( $ripper_accent_latest ) ) {
+          echo esc_html__( 'Out now: ', 'ripper-sports' ) . esc_html( $ripper_accent_latest[0]->post_title );
+        } else {
+          esc_html_e( 'The Morning Ripper — out now', 'ripper-sports' );
+        }
+        ?>
+      </div>
+      <div class="accent-cell accent-cell--live">
+        <a href="<?php echo esc_url( get_post_type_archive_link( 'match' ) ); ?>" class="accent-live-link">
+          <span class="accent-live-pulse" aria-hidden="true"></span>
+          <span class="accent-live-count"><?php echo esc_html( ripper_sports_count_active_matches() ); ?></span>
+          <?php esc_html_e( 'LIVE', 'ripper-sports' ); ?>
+        </a>
+      </div>
     </div>
   </div>
 </header>

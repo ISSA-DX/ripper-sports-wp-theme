@@ -30,7 +30,7 @@ get_header();
   </div>
 </section>
 
-<main id="main-content" class="section pt-0">
+<main id="main-content" class="section pt-0" data-drift="0.05">
 
   <!-- Section B — Our Story / Mission -->
   <div class="container">
@@ -68,22 +68,22 @@ get_header();
       <div class="stat-grid mt-12 reveal-stagger">
         <div class="stat-card">
           <span class="stat-label"><?php esc_html_e( 'Sports Covered', 'ripper-sports' ); ?></span>
-          <span class="stat-value stat-value-highlight">10+</span>
+          <span class="stat-value stat-value-highlight" data-counter data-counter-target="10" data-counter-suffix="+">10+</span>
           <span class="text-body-sm text-muted mt-2"><?php esc_html_e( 'From AFL to Formula 1®', 'ripper-sports' ); ?></span>
         </div>
         <div class="stat-card">
           <span class="stat-label"><?php esc_html_e( 'Publishing Cadence', 'ripper-sports' ); ?></span>
-          <span class="stat-value stat-value-highlight">24/7</span>
+          <span class="stat-value stat-value-highlight" data-counter-skip>24/7</span>
           <span class="text-body-sm text-muted mt-2"><?php esc_html_e( 'Match-day live coverage', 'ripper-sports' ); ?></span>
         </div>
         <div class="stat-card">
           <span class="stat-label"><?php esc_html_e( 'Editorial Independence', 'ripper-sports' ); ?></span>
-          <span class="stat-value stat-value-highlight">100%</span>
+          <span class="stat-value stat-value-highlight" data-counter data-counter-target="100" data-counter-suffix="%">100%</span>
           <span class="text-body-sm text-muted mt-2"><?php esc_html_e( 'No paywall, no pay-to-play', 'ripper-sports' ); ?></span>
         </div>
         <div class="stat-card">
           <span class="stat-label"><?php esc_html_e( 'Headquarters', 'ripper-sports' ); ?></span>
-          <span class="stat-value stat-value-highlight">MEL</span>
+          <span class="stat-value stat-value-highlight" data-counter-skip>MEL</span>
           <span class="text-body-sm text-muted mt-2"><?php esc_html_e( 'Melbourne, VIC — with contributors nationwide', 'ripper-sports' ); ?></span>
         </div>
       </div>
@@ -136,7 +136,7 @@ get_header();
 </main>
 
 <!-- Section E — Editorial Pillars (on banded surface) -->
-<section class="section bg-primary-container border-y border-white-10">
+<section class="section bg-primary-container border-y border-white-10" data-drift="0.06">
   <div class="container">
     <div class="section-header reveal">
       <span class="page-kicker"><?php esc_html_e( 'Editorial Pillars', 'ripper-sports' ); ?></span>
@@ -190,7 +190,7 @@ get_header();
 
     <div class="grid grid-cols-1 md-grid-cols-2 lg-grid-cols-4 gap-6 mt-12 reveal-stagger">
 
-      <article class="card">
+      <article class="card" data-parallax="0.08">
         <div class="card-image" style="aspect-ratio: 1 / 1; background: var(--rs-shield-30); display: flex; align-items: center; justify-content: center;">
           <svg viewBox="0 0 100 100" width="60%" height="60%" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
             <circle cx="50" cy="38" r="18" fill="var(--rs-cream, #f3f0e6)"/>
@@ -204,7 +204,7 @@ get_header();
         </div>
       </article>
 
-      <article class="card">
+      <article class="card" data-parallax="0.08">
         <div class="card-image" style="aspect-ratio: 1 / 1; background: var(--rs-shield-30); display: flex; align-items: center; justify-content: center;">
           <svg viewBox="0 0 100 100" width="60%" height="60%" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
             <circle cx="50" cy="38" r="18" fill="var(--rs-cream, #f3f0e6)"/>
@@ -218,7 +218,7 @@ get_header();
         </div>
       </article>
 
-      <article class="card">
+      <article class="card" data-parallax="0.08">
         <div class="card-image" style="aspect-ratio: 1 / 1; background: var(--rs-shield-30); display: flex; align-items: center; justify-content: center;">
           <svg viewBox="0 0 100 100" width="60%" height="60%" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
             <circle cx="50" cy="38" r="18" fill="var(--rs-cream, #f3f0e6)"/>
@@ -232,7 +232,7 @@ get_header();
         </div>
       </article>
 
-      <article class="card">
+      <article class="card" data-parallax="0.08">
         <div class="card-image" style="aspect-ratio: 1 / 1; background: var(--rs-shield-30); display: flex; align-items: center; justify-content: center;">
           <svg viewBox="0 0 100 100" width="60%" height="60%" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
             <circle cx="50" cy="38" r="18" fill="var(--rs-cream, #f3f0e6)"/>

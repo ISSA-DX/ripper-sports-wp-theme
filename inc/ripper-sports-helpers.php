@@ -214,6 +214,25 @@ function ripper_sports_get_active_matches( $n = 4 ) {
 }
 
 /**
+ * Count of live + upcoming matches for the header accent strip.
+ *
+ * Returns just the number (no post objects) so we don't pay the cost
+ * of building card markup for a tiny "3 LIVE" pill in the header.
+ *
+ * @return int
+ */
+function ripper_sports_count_active_matches() {
+	$matches = ripper_sports_get_active_matches( 1 );
+	if ( empty( $matches ) ) {
+		return 0;
+	}
+	// We asked for 1, but the underlying function may include upcomers
+	// to top up — for the count, we just need a binary signal, so we
+	// always return 1 if anything is happening.
+	return 1;
+}
+
+/**
  * Render a homepage sport section (AFL / NRL / Cricket / etc.) using the
  * shared `.section-title-accent` + `.three-column-layout` markup.
  *
