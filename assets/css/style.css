@@ -5875,3 +5875,221 @@ a.primary-nav-link.is-active::before {
   .sport-card:hover .sport-card-image img { transform: none; }
 }
 
+/* ===========================================================
+   54. MOBILE-FIRST SAFETY NET
+   ===========================================================
+
+   Wide-bleed utility classes (grid-cols-1 lg-grid-cols-12,
+   space-y-6, p-6 md-p-10) escape the viewport on small screens
+   because they have no mobile rule — the desktop grid persists
+   and pushes content off-screen.
+
+   This section forces a single-column collapse on mobile,
+   enables the desktop grid at lg+, and stacks forms, buttons,
+   and the filter sidebar into a touch-friendly layout.
+
+   Touch targets: 44x44 px minimum.
+   Forms: stack vertically below 640px.
+   No page may scroll horizontally between 320–1023px. */
+
+html, body { overflow-x: hidden; }
+
+/* Cap container width to viewport even on weird zoom levels. */
+.container,
+.container-narrow,
+.container-wide { max-width: min(100%, var(--container-max)); }
+
+/* Block every Tailwind-style multi-column grid on mobile. */
+@media (max-width: 1023px) {
+  .grid-cols-1.lg-grid-cols-12,
+  .grid-cols-1.lg-grid-cols-2,
+  .grid-cols-1.lg-grid-cols-3,
+  .grid-cols-1.lg-grid-cols-4 { grid-template-columns: 1fr !important; }
+  .grid-cols-1.md-grid-cols-2,
+  .grid-cols-1.md-grid-cols-3,
+  .grid-cols-1.md-grid-cols-4 { grid-template-columns: 1fr !important; }
+  .lg-col-span-2, .lg-col-span-3, .lg-col-span-4, .lg-col-span-5,
+  .lg-col-span-6, .lg-col-span-7, .lg-col-span-8, .lg-col-span-9,
+  .lg-col-span-10, .lg-col-span-11, .lg-col-span-12 { grid-column: span 1; }
+}
+
+/* Newsletter form — stack on phones. */
+@media (max-width: 639px) {
+  .newsletter-inline {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    width: 100%;
+  }
+  .newsletter-inline .form-input { width: 100%; }
+  .newsletter-inline .btn { width: 100%; }
+}
+
+/* Page-hero padding — the pt-32 / pt-40 utility values are desktop-only. */
+@media (max-width: 767px) {
+  .relative.pt-32.pb-16,
+  .pt-32.pb-16 { padding-top: 6rem !important; padding-bottom: 2rem !important; }
+  .relative.pt-40,
+  .pt-40 { padding-top: 7rem !important; }
+  .p-8.md-p-12,
+  .p-6.md-p-10,
+  .p-6.md-p-8 { padding: 1.25rem !important; }
+}
+
+/* Hero typography scales for narrow screens. */
+@media (max-width: 767px) {
+  .text-display { font-size: clamp(1.75rem, 7vw, 2.5rem); line-height: 1.12; }
+  .page-kicker { font-size: 0.65rem; letter-spacing: 0.18em; }
+  .stat-value { font-size: 2rem; }
+}
+
+/* Stat-card grid scales down to 1-col on very small screens. */
+@media (max-width: 374px) {
+  .stat-grid { grid-template-columns: 1fr; }
+}
+
+/* Search bar — stack on phones. */
+@media (max-width: 639px) {
+  .search-input-wrap {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  .search-input-wrap .form-input { width: 100%; }
+  .search-input-wrap .btn { width: 100%; }
+  .search-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  .search-sort { width: 100%; }
+  .search-sort .form-select { width: 100%; }
+}
+
+/* 404 hero — cap the headline + stack the action row. */
+@media (max-width: 767px) {
+  .error-headline { font-size: 2rem; line-height: 1.1; }
+  .error-headline-line { display: inline; }
+  .error-action-row { flex-wrap: wrap; }
+  .error-action-row .btn {
+    flex: 1 1 calc(50% - 0.5rem);
+    font-size: 0.8rem;
+    padding: 0.7rem 0.9rem;
+  }
+  .error-search {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .error-search .form-input { width: 100%; }
+}
+
+/* Filter sidebar — on mobile, replace sticky sidebar with a collapsible
+   sheet. The toggle is rendered by the partial; CSS handles visibility. */
+@media (max-width: 1023px) {
+  .archive-layout { flex-direction: column; }
+  .archive-layout > aside { width: 100%; max-width: 100%; }
+  .filter-sidebar {
+    position: static !important;
+    max-height: none !important;
+  }
+  .filter-sidebar .filter-form { display: none; }
+  .filter-sidebar.is-open .filter-form { display: block; }
+  .filter-sidebar-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.75rem;
+    background: var(--rs-surface-container-high);
+    border: 1px solid var(--rs-outline-variant);
+    border-radius: 12px;
+    color: var(--rs-cream);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .filter-sidebar-toggle::after {
+    content: "";
+    width: 10px;
+    height: 10px;
+    border-right: 2px solid var(--rs-cream);
+    border-bottom: 2px solid var(--rs-cream);
+    transform: rotate(45deg);
+    transition: transform 220ms ease;
+  }
+  .filter-sidebar.is-open .filter-sidebar-toggle::after { transform: rotate(-135deg); }
+}
+
+@media (min-width: 1024px) {
+  .filter-sidebar-toggle { display: none; }
+}
+
+/* Article-hero — sane crop on mobile. */
+@media (max-width: 767px) {
+  .article-hero {
+    min-height: 360px;
+    background-position: center 30%;
+    padding-top: 6rem;
+    padding-bottom: 2rem;
+  }
+  .article-hero h1 { font-size: clamp(1.6rem, 6.5vw, 2.25rem); }
+  .article-meta { font-size: 0.85rem; flex-wrap: wrap; gap: 0.5rem; }
+}
+
+/* Touch-target — guarantee minimum tap area. */
+@media (max-width: 767px) {
+  .btn,
+  .filter-chip,
+  .js-card-bookmark,
+  .card-reaction,
+  .share-btn {
+    min-height: 44px;
+  }
+  .share-btn { padding: 12px; }
+  .card-reaction { padding: 10px; }
+}
+
+/* Article body — make sure images, tables, embeds don't blow the viewport. */
+.entry-content img,
+.entry-content figure,
+.entry-content video,
+.entry-content iframe,
+.entry-content table { max-width: 100%; height: auto; }
+.entry-content iframe { aspect-ratio: 16 / 9; }
+.entry-content table { display: block; overflow-x: auto; }
+.entry-content pre { overflow-x: auto; max-width: 100%; }
+
+/* Contact page hero — same as page-about. */
+@media (max-width: 767px) {
+  .form-group.flex.items-start { gap: 0.75rem; }
+  .form-checkbox { width: 22px; height: 22px; }
+}
+
+/* Confirm page action row — stack on mobile. */
+@media (max-width: 639px) {
+  .flex.flex-wrap.gap-3 { gap: 0.75rem; }
+  .page-header--accent .flex.flex-wrap.gap-3 {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .page-header--accent .flex.flex-wrap.gap-3 .btn { width: 100%; }
+}
+
+/* Editor's meet-the-desk cards — stack 1-col on phones. */
+@media (max-width: 767px) {
+  .grid-cols-1.md-grid-cols-2.lg-grid-cols-4,
+  .grid-cols-1.md-grid-cols-2,
+  .grid-cols-1.md-grid-cols-3 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Stat-card hover lift — disable on touch devices. */
+@media (hover: none) {
+  .stat-card:hover,
+  .sport-card:hover,
+  .card:hover { transform: none; }
+}
+

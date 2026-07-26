@@ -12,7 +12,7 @@ get_header();
 ?>
 
 <!-- Page title / hero band -->
-<section class="relative pt-32 pb-16 md-pt-40 md-pb-24 bg-gradient-to-b from-shield-20 to-background border-b border-white-10">
+<section class="relative pt-32 pb-16 md-pt-40 md-pb-24 bg-gradient-to-b from-shield-20 to-background border-b border-white-10 overflow-hidden" data-drift="0.04">
   <div class="container">
     <div class="max-w-3xl reveal">
       <span class="tag mb-4"><?php esc_html_e( 'About Ripper Sports', 'ripper-sports' ); ?></span>

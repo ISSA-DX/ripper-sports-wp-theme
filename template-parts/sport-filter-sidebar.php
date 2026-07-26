@@ -70,6 +70,15 @@ $has_content_filters = ( ! empty( $used_cats ) || ! empty( $used_tags ) );
 ?>
 
 <aside class="filter-sidebar sticky-sidebar" aria-label="<?php esc_attr_e( 'Filter stories', 'ripper-sports' ); ?>">
+	<button type="button" class="filter-sidebar-toggle js-filter-sidebar-toggle" aria-expanded="false" aria-controls="sport-filter">
+		<span>
+			<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="vertical-align: -3px; margin-right: 6px;"><path d="M3 4h18v2H3V4zm3 7h12v2H6v-2zm4 7h4v2h-4v-2z"/></svg>
+			<?php
+			/* translators: %s: sport name */
+			echo esc_html( sprintf( __( 'Filter %s Stories', 'ripper-sports' ), $term_name ) );
+			?>
+		</span>
+	</button>
 	<div class="widget filter-widget">
 		<header class="filter-widget-header">
 			<h3 class="filter-title"><?php

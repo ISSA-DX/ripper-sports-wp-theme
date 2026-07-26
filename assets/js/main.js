@@ -609,6 +609,46 @@
   initArchiveFilters();
 
   /* ───────────────────────────────────────────────────────────────────────────
+     Filter sidebar toggle (mobile)
+     ───────────────────────────────────────────────────────────────────────────
+     On mobile (<=1023px), the sport-archive filter sidebar collapses
+     into a hidden form behind a "Filters" button. Tapping the button
+     toggles `.is-open` on the sidebar which CSS uses to show the form.
+     Hidden on desktop (display:none via CSS). */
+  function initFilterSidebar() {
+    const toggle  = $('.js-filter-sidebar-toggle');
+    const sidebar = $('.filter-sidebar');
+    if (!toggle || !sidebar) return;
+
+    // Start collapsed on mobile, open on desktop.
+    const applyInitial = () => {
+      if (window.matchMedia('(max-width: 1023px)').matches) {
+        sidebar.classList.remove('is-open');
+        toggle.setAttribute('aria-expanded', 'false');
+      } else {
+        sidebar.classList.add('is-open');
+        toggle.setAttribute('aria-expanded', 'true');
+      }
+    };
+    applyInitial();
+
+    toggle.addEventListener('click', (event) => {
+      event.preventDefault();
+      const isOpen = sidebar.classList.toggle('is-open');
+      toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+
+    // Re-evaluate on resize (debounced to 150ms).
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(applyInitial, 150);
+    });
+  }
+
+  initFilterSidebar();
+
+  /* ───────────────────────────────────────────────────────────────────────────
      Card bookmarks
      ─────────────────────────────────────────────────────────────────────────── */
   $$('.card-bookmark').forEach((btn) => {
