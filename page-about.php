@@ -117,14 +117,95 @@ get_header();
               'order'      => 'ASC',
           )
       );
-      if ( ! empty( $cover_sports ) && ! is_wp_error( $cover_sports ) ) : ?>
-        <div class="grid-auto mt-12 reveal-stagger">
-          <?php foreach ( $cover_sports as $sport ) : ?>
-            <a href="<?php echo esc_url( get_term_link( $sport ) ); ?>" class="card">
+      if ( ! empty( $cover_sports ) && ! is_wp_error( $cover_sports ) ) :
+        // Map sport slugs → realistic photo + tagline + accent colour.
+        // Photos are sourced from Unsplash (consistent with the existing
+        // fallback pattern in template-parts/content-card.php) so editorial
+        // can swap them for first-party shots later without touching code.
+        $sport_visuals = array(
+          'afl'         => array(
+            'image'   => 'https://images.unsplash.com/photo-1607627000458-210e8d2bdb1d?auto=format&fit=crop&w=800&q=80',
+            'tagline' => 'Australian Football',
+            'credit'  => 'Australian rules football',
+          ),
+          'nrl'         => array(
+            'image'   => 'https://images.unsplash.com/photo-1579952063874-6a3bb8ba1f1f?auto=format&fit=crop&w=800&q=80',
+            'tagline' => 'Rugby League',
+            'credit'  => 'Rugby league match',
+          ),
+          'cricket'     => array(
+            'image'   => 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&w=800&q=80',
+            'tagline' => 'Test, ODI & T20',
+            'credit'  => 'Cricket batsman at the crease',
+          ),
+          'soccer'      => array(
+            'image'   => 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=800&q=80',
+            'tagline' => 'A-League & Socceroos',
+            'credit'  => 'Football players in action',
+          ),
+          'basketball'  => array(
+            'image'   => 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=800&q=80',
+            'tagline' => 'NBL & NCAA',
+            'credit'  => 'Basketball game action shot',
+          ),
+          'rugby'       => array(
+            'image'   => 'https://images.unsplash.com/photo-1579952063874-6a3bb8ba1f1f?auto=format&fit=crop&w=800&q=80',
+            'tagline' => 'Wallabies & Super Rugby',
+            'credit'  => 'Rugby union scrum',
+          ),
+          'tennis'      => array(
+            'image'   => 'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=800&q=80',
+            'tagline' => 'ATP & WTA Tour',
+            'credit'  => 'Tennis player on court',
+          ),
+          'motorsport'  => array(
+            'image'   => 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80',
+            'tagline' => 'Formula 1® & Supercars',
+            'credit'  => 'Formula 1 car on track',
+          ),
+          'golf'        => array(
+            'image'   => 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?auto=format&fit=crop&w=800&q=80',
+            'tagline' => 'PGA Tour & Majors',
+            'credit'  => 'Golf course and club',
+          ),
+          'boxing-mma'  => array(
+            'image'   => 'https://images.unsplash.com/photo-1517438476312-10d79c077509?auto=format&fit=crop&w=800&q=80',
+            'tagline' => 'Boxing & UFC',
+            'credit'  => 'Boxing training scene',
+          ),
+          'individual-sport' => array(
+            'image'   => 'https://images.unsplash.com/photo-1517438476312-10d79c077509?auto=format&fit=crop&w=800&q=80',
+            'tagline' => 'Boxing & UFC',
+            'credit'  => 'Combat sports scene',
+          ),
+        );
+        $default_visual = array(
+          'image'   => 'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=800&q=80',
+          'tagline' => 'Coverage',
+          'credit'  => 'Sports scene',
+        );
+        ?>
+        <div class="sport-card-grid mt-12 reveal-stagger">
+          <?php
+          foreach ( $cover_sports as $sport ) :
+            $slug_key     = strtolower( $sport->slug );
+            $visual       = isset( $sport_visuals[ $slug_key ] ) ? $sport_visuals[ $slug_key ] : $default_visual;
+            $sport_class  = sanitize_html_class( 'sport-card--' . $slug_key );
+            $count_text   = sprintf(
+              /* translators: %d: number of posts in this sport */
+              _n( '%d story', '%d stories', (int) $sport->count, 'ripper-sports' ),
+              (int) $sport->count
+            );
+            ?>
+            <a href="<?php echo esc_url( get_term_link( $sport ) ); ?>" class="card sport-card <?php echo esc_attr( $sport_class ); ?>">
+              <div class="sport-card-image">
+                <img src="<?php echo esc_url( $visual['image'] ); ?>" alt="<?php echo esc_attr( $visual['credit'] ); ?>" loading="lazy" decoding="async">
+                <span class="sport-card-tagline"><?php echo esc_html( $visual['tagline'] ); ?></span>
+              </div>
               <div class="card-body">
                 <span class="card-tag"><?php echo esc_html( $sport->name ); ?></span>
                 <h3 class="card-title"><?php echo esc_html( $sport->name ); ?> <?php esc_html_e( 'Coverage', 'ripper-sports' ); ?></h3>
-                <p class="card-excerpt"><?php esc_html_e( 'Latest news, analysis and highlights from across the code.', 'ripper-sports' ); ?></p>
+                <p class="card-excerpt"><?php echo esc_html( $count_text ); ?> published — <?php echo esc_html( $visual['tagline'] ); ?>.</p>
               </div>
             </a>
           <?php endforeach; ?>

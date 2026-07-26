@@ -5697,3 +5697,176 @@ a.primary-nav-link.is-active::before {
   }
 }
 
+/* ==========================================================================
+   Sport coverage cards — About page section D
+   ==========================================================================
+   Classic, smaller cards with a real photo header and a thin per-sport
+   accent strip. The hero is 4:3 (not 16:9) so the cards stay compact in
+   the 3-column desktop grid. The badge sits below the photo as a label,
+   not floating over the title. */
+.sport-card-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .sport-card-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .sport-card-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.75rem;
+  }
+}
+
+@media (min-width: 1440px) {
+  .sport-card-grid {
+    /* Cap the card width so very wide screens don't stretch the photo. */
+    grid-template-columns: repeat(3, minmax(0, 340px));
+    justify-content: space-between;
+  }
+}
+
+/* Card root — same .card treatment, gets a per-sport accent strip on top. */
+.sport-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+}
+
+.sport-card::after {
+  /* Per-sport accent strip — a thin coloured hairline at the top of the card. */
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--sport-accent, var(--rs-gold));
+  z-index: 4;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+/* Per-sport accent colours (matches the existing --sport-* tokens). */
+.sport-card--afl        { --sport-accent: var(--sport-afl); }
+.sport-card--nrl        { --sport-accent: var(--sport-nrl); }
+.sport-card--cricket    { --sport-accent: var(--sport-cricket); }
+.sport-card--soccer     { --sport-accent: var(--sport-soccer); }
+.sport-card--basketball { --sport-accent: var(--sport-basketball); }
+.sport-card--rugby      { --sport-accent: var(--sport-rugby); }
+.sport-card--tennis     { --sport-accent: var(--sport-tennis); }
+.sport-card--motorsport { --sport-accent: var(--sport-motorsport); }
+.sport-card--golf       { --sport-accent: var(--sport-golf); }
+.sport-card--boxing-mma { --sport-accent: var(--sport-boxing-mma); }
+.sport-card--individual-sport { --sport-accent: var(--sport-boxing-mma); }
+
+/* Image region — 4:3 photo with a subtle bottom vignette for the tagline. */
+.sport-card-image {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background-color: var(--rs-brand-green);
+  border-bottom: 1px solid var(--rs-outline-variant);
+}
+
+.sport-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 600ms var(--ease-out-soft);
+}
+
+.sport-card:hover .sport-card-image img {
+  transform: scale(1.05);
+}
+
+.sport-card-image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 50%, rgba(6, 16, 13, 0.85) 100%);
+  pointer-events: none;
+}
+
+.sport-card-tagline {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 0.85rem;
+  right: 0.85rem;
+  z-index: 2;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--rs-cream);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Card body — tighter padding, classic readable layout. */
+.sport-card .card-body {
+  padding: 1rem 1.1rem 1.25rem;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sport-card .card-title {
+  font-size: 1rem;
+  line-height: 1.3;
+  margin-top: 0;
+}
+
+.sport-card .card-excerpt {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--rs-on-surface-variant);
+  margin: 0;
+}
+
+/* Inside sport cards, the badge is a small label, not a floating pill. */
+.sport-card .card-tag {
+  position: static;
+  background-color: transparent;
+  color: var(--rs-gold);
+  padding: 0;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  box-shadow: none;
+  border-radius: 0;
+  align-self: flex-start;
+  display: block;
+}
+
+.sport-card .card-tag::before {
+  display: inline-block;
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--rs-gold);
+  box-shadow: 0 0 6px rgba(255, 217, 150, 0.6);
+  margin-right: 0.55rem;
+  vertical-align: middle;
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sport-card { transition: none; }
+  .sport-card:hover { transform: none; }
+  .sport-card:hover .sport-card-image img { transform: none; }
+}
+

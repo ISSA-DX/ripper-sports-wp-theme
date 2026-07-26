@@ -15,7 +15,7 @@ get_header();
 <main id="main-content">
 	<section class="section">
 		<div class="container">
-			<?php get_template_part( 'template-parts/breadcrumbs' ); ?>
+			<?php /* Breadcrumbs removed per UX: keep the confirmation hero clean. */ ?>
 
 			<header class="page-header page-header--accent">
 				<span class="tag"><?php esc_html_e( 'Message Received', 'ripper-sports' ); ?></span>
