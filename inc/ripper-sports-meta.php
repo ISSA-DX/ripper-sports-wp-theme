@@ -339,36 +339,3 @@ function ripper_sports_save_match_metabox( $post_id ) {
 	update_post_meta( $post_id, '_rs_match_is_live', ! empty( $_POST['_rs_match_is_live'] ) );
 }
 add_action( 'save_post_match', 'ripper_sports_save_match_metabox' );
-
-/**
- * AJAX handler: increment a like/share count on a post.
- *
- * POST params:
- *   post_id (int)  — target post ID
- *   type    (str)  — 'like' or 'share'
- *   nonce   (str)  — `ripper_sports_reaction` nonce
- *
- * Returns JSON { success: bool, data: { count: int } }
- */
-function ripper_sports_reaction_handler() {
-	$nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
-	if ( ! wp_verify_nonce( $nonce, 'ripper_sports_reaction' ) ) {
-		wp_send_json_error( __( 'Invalid nonce.', 'ripper-sports' ), 403 );
-	}
-
-	$post_id = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : 0;
-	$type    = isset( $_POST['type'] ) ? sanitize_key( wp_unslash( $_POST['type'] ) ) : '';
-
-	if ( ! $post_id || ! in_array( $type, array( 'like', 'share' ), true ) ) {
-		wp_send_json_error( __( 'Bad request.', 'ripper-sports' ), 400 );
-	}
-
-	$key = '_rs_' . $type . '_count';
-	$current = (int) get_post_meta( $post_id, $key, true );
-	$new      = $current + 1;
-	update_post_meta( $post_id, $key, $new );
-
-	wp_send_json_success( array( 'count' => $new ) );
-}
-add_action( 'wp_ajax_ripper_sports_reaction', 'ripper_sports_reaction_handler' );
-add_action( 'wp_ajax_nopriv_ripper_sports_reaction', 'ripper_sports_reaction_handler' );

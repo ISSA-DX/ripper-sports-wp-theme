@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Theme version for cache busting.
  */
-define( 'RIPPER_SPORTS_VERSION', '1.4.2' );
+define( 'RIPPER_SPORTS_VERSION', '1.4.4' );
 
 /**
  * Load theme-specific infrastructure (CPT, meta, helpers, shortcodes).
@@ -116,6 +116,9 @@ function ripper_sports_scripts() {
 			'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
 			'restUrl'  => esc_url_raw( rest_url() ),
 			'nonce'    => wp_create_nonce( 'ripper_sports_ajax' ),
+			'reactionNonce' => wp_create_nonce( 'ripper_sports_reaction' ),
+			'isLoggedIn'    => is_user_logged_in(),
+			'bodyClasses'   => get_body_class(),
 		)
 	);
 }
@@ -174,6 +177,62 @@ function ripper_sports_contact_handler() {
 }
 add_action( 'wp_ajax_ripper_sports_contact', 'ripper_sports_contact_handler' );
 add_action( 'wp_ajax_nopriv_ripper_sports_contact', 'ripper_sports_contact_handler' );
+
+/**
+ * Card reaction handler.
+ *
+ * Accepts a post ID and reaction type (like, comment, share) and
+ * increments the corresponding post meta counter. Returns the new
+ * count so the front-end can update without a refresh.
+ *
+ * Uses a transient-based per-user rate limit so a single browser
+ * can't double-click to inflate the count. Reactions are also
+ * anonymous-friendly: we don't require login to count them, just to
+ * prevent double-counts from the same browser session.
+ */
+function ripper_sports_reaction_handler() {
+	// Verify nonce.
+	$nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
+	if ( ! wp_verify_nonce( $nonce, 'ripper_sports_reaction' ) ) {
+		wp_send_json_error( __( 'Security check failed. Please refresh and try again.', 'ripper-sports' ), 403 );
+	}
+
+	$post_id = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : 0;
+	$type    = isset( $_POST['type'] ) ? sanitize_key( wp_unslash( $_POST['type'] ) ) : '';
+
+	if ( ! $post_id || ! get_post( $post_id ) ) {
+		wp_send_json_error( __( 'Invalid post.', 'ripper-sports' ), 400 );
+	}
+
+	// Whitelist reaction types.
+	$allowed_types = array( 'like', 'share', 'comment' );
+	if ( ! in_array( $type, $allowed_types, true ) ) {
+		wp_send_json_error( __( 'Invalid reaction type.', 'ripper-sports' ), 400 );
+	}
+
+	// Per-session rate limit: a single browser can't double-count.
+	// Key by session token if present, otherwise by IP + post + type.
+	$rate_key = 'rs_react_' . md5( $type . '|' . $post_id . '|' . ( isset( $_COOKIE['rs_rid'] ) ? $_COOKIE['rs_rid'] : ( $_SERVER['REMOTE_ADDR'] ?? '' ) ) );
+	if ( get_transient( $rate_key ) ) {
+		wp_send_json_error( __( 'You already reacted to this.', 'ripper-sports' ), 429 );
+	}
+	set_transient( $rate_key, 1, 12 * HOUR_IN_SECONDS );
+
+	// Increment the corresponding meta key.
+	$meta_key = '_rs_' . $type . '_count';
+	$current  = (int) get_post_meta( $post_id, $meta_key, true );
+	$new      = $current + 1;
+	update_post_meta( $post_id, $meta_key, $new );
+
+	wp_send_json_success(
+		array(
+			'type'  => $type,
+			'count' => $new,
+		)
+	);
+}
+add_action( 'wp_ajax_ripper_sports_reaction', 'ripper_sports_reaction_handler' );
+add_action( 'wp_ajax_nopriv_ripper_sports_reaction', 'ripper_sports_reaction_handler' );
 
 /**
  * Estimate reading time for the current post.

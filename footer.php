@@ -122,15 +122,25 @@
           <input type="email" name="email" class="form-input" placeholder="<?php esc_attr_e( 'Email address', 'ripper-sports' ); ?>" required aria-label="<?php esc_attr_e( 'Email address for newsletter', 'ripper-sports' ); ?>">
           <button type="submit" class="btn btn-primary"><?php esc_html_e( 'Subscribe', 'ripper-sports' ); ?></button>
         </form>
+        <p class="js-newsletter-status" role="status" aria-live="polite" aria-atomic="true"></p>
         <p class="text-body-sm text-muted mt-3"><?php esc_html_e( 'No spam. Unsubscribe anytime.', 'ripper-sports' ); ?></p>
       </div>
     </div>
 
     <div class="footer-bottom">
-      <p class="footer-copyright">&copy; <?php echo esc_html( gmdate( 'Y' ) . ' ' . get_bloginfo( 'name' ) ); ?>. <?php esc_html_e( 'All rights reserved.', 'ripper-sports' ); ?></p>
+      <p class="footer-copyright">
+        &copy; <?php
+        /* translators: 1: copyright year, 2: site name */
+        echo esc_html( sprintf( __( '%1$d %2$s. All rights reserved.', 'ripper-sports' ), (int) gmdate( 'Y' ), get_bloginfo( 'name' ) ) );
+        ?>
+      </p>
       <nav class="footer-legal" aria-label="<?php esc_attr_e( 'Legal links', 'ripper-sports' ); ?>">
-        <a href="<?php echo esc_url( get_permalink( get_page_by_path( 'privacy' ) ) ); ?>"><?php esc_html_e( 'Privacy Policy', 'ripper-sports' ); ?></a>
-        <a href="<?php echo esc_url( get_permalink( get_page_by_path( 'terms' ) ) ); ?>"><?php esc_html_e( 'Terms of Service', 'ripper-sports' ); ?></a>
+        <?php if ( get_page_by_path( 'privacy' ) ) : ?>
+          <a href="<?php echo esc_url( get_permalink( get_page_by_path( 'privacy' ) ) ); ?>"><?php esc_html_e( 'Privacy Policy', 'ripper-sports' ); ?></a>
+        <?php endif; ?>
+        <?php if ( get_page_by_path( 'terms' ) ) : ?>
+          <a href="<?php echo esc_url( get_permalink( get_page_by_path( 'terms' ) ) ); ?>"><?php esc_html_e( 'Terms of Service', 'ripper-sports' ); ?></a>
+        <?php endif; ?>
         <a href="<?php echo esc_url( get_permalink( get_page_by_path( 'about' ) ) ); ?>"><?php esc_html_e( 'About Us', 'ripper-sports' ); ?></a>
       </nav>
     </div>

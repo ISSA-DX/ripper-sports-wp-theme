@@ -173,7 +173,50 @@
   initCookieBanner();
 
   /* ───────────────────────────────────────────────────────────────────────────
-     Contact form
+     AJAX helpers
+     ───────────────────────────────────────────────────────────────────────────
+     Single submitForm() handles every form that carries a
+     `data-ajax-action="..."` attribute. The action name maps 1:1 to the
+     wp_ajax_{action} hook in functions.php.
+  */
+  const ajaxData = window.ripperSportsData || {};
+
+  function ajaxPost(action, payload) {
+    if (!ajaxData.ajaxUrl) {
+      return Promise.reject(new Error('AJAX endpoint not configured'));
+    }
+    const body = new FormData();
+    body.append('action', action);
+    Object.keys(payload || {}).forEach((k) => {
+      if (payload[k] !== undefined && payload[k] !== null) {
+        body.append(k, String(payload[k]));
+      }
+    });
+    body.append('nonce', ajaxData.nonce || '');
+    return fetch(ajaxData.ajaxUrl, {
+      method: 'POST',
+      credentials: 'same-origin',
+      body,
+    }).then((r) => r.json());
+  }
+
+  function setButtonBusy(button, busyText) {
+    if (!button) return { restore: () => {} };
+    const original = button.textContent;
+    button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+    button.textContent = busyText;
+    return {
+      restore(text) {
+        button.disabled = false;
+        button.removeAttribute('aria-busy');
+        button.textContent = text === undefined ? original : text;
+      },
+    };
+  }
+
+  /* ───────────────────────────────────────────────────────────────────────────
+     Contact form — AJAX submission
      ─────────────────────────────────────────────────────────────────────────── */
   const contactForm = $('.js-contact-form');
 
@@ -186,31 +229,32 @@
 
     const fields = [name, email, message, consent];
     fields.forEach((field) => {
-      const error = field.parentElement.querySelector('.form-error');
+      if (!field) return;
+      const error = field.closest('.form-group')?.querySelector('.form-error');
       if (error) error.classList.remove('is-visible');
     });
 
     if (!name || !name.value.trim()) {
       isValid = false;
-      const error = name.parentElement.querySelector('.form-error');
+      const error = name.closest('.form-group')?.querySelector('.form-error');
       if (error) error.classList.add('is-visible');
     }
 
     if (!email || !email.value.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
       isValid = false;
-      const error = email.parentElement.querySelector('.form-error');
+      const error = email.closest('.form-group')?.querySelector('.form-error');
       if (error) error.classList.add('is-visible');
     }
 
     if (!message || !message.value.trim()) {
       isValid = false;
-      const error = message.parentElement.querySelector('.form-error');
+      const error = message.closest('.form-group')?.querySelector('.form-error');
       if (error) error.classList.add('is-visible');
     }
 
     if (!consent || !consent.checked) {
       isValid = false;
-      const error = consent.parentElement.querySelector('.form-error');
+      const error = consent.closest('.form-group')?.querySelector('.form-error');
       if (error) error.classList.add('is-visible');
     }
 
@@ -218,50 +262,127 @@
   }
 
   if (contactForm) {
+    const status = $('.js-form-status', contactForm);
+    const confirmationUrl = contactForm.dataset.confirmationUrl;
+
+    function setStatus(message, kind) {
+      if (!status) return;
+      status.textContent = message;
+      status.classList.remove('is-success', 'is-error');
+      if (kind) status.classList.add('is-' + kind);
+    }
+
     contactForm.addEventListener('submit', (event) => {
       event.preventDefault();
-      if (!validateContactForm(contactForm)) return;
-
-      const button = contactForm.querySelector('button[type="submit"]');
-      const originalText = button ? button.textContent : '';
-
-      if (button) {
-        button.disabled = true;
-        button.textContent = 'Dispatching…';
+      if (!validateContactForm(contactForm)) {
+        setStatus('', null);
+        // Focus the first invalid field for screen-reader users.
+        const firstError = contactForm.querySelector('.form-error.is-visible');
+        if (firstError) {
+          const input = firstError.parentElement.querySelector('input, select, textarea');
+          if (input) input.focus();
+        }
+        return;
       }
 
-      // Simulate network request
-      setTimeout(() => {
-        // In a real WordPress theme this becomes a wp-admin admin-post.php call
-        window.location.href = contactForm.dataset.confirmationUrl || 'contact-confirmation.html';
-      }, 1500);
+      const submitBtn = contactForm.querySelector('button[type="submit"]');
+      const busy = setButtonBusy(submitBtn, 'Dispatching…');
+      setStatus('Sending your message…', null);
+
+      const payload = {
+        name:    contactForm.querySelector('[name="name"]').value.trim(),
+        email:   contactForm.querySelector('[name="email"]').value.trim(),
+        topic:   contactForm.querySelector('[name="topic"]')?.value || '',
+        subject: contactForm.querySelector('[name="subject"]')?.value || '',
+        message: contactForm.querySelector('[name="message"]').value.trim(),
+      };
+
+      const action = contactForm.dataset.ajaxAction || 'ripper_sports_contact';
+
+      ajaxPost(action, payload)
+        .then((response) => {
+          if (response && response.success) {
+            const msg = (response.data && typeof response.data === 'string')
+              ? response.data
+              : 'Message sent.';
+            setStatus(msg, 'success');
+            contactForm.reset();
+            // Redirect to confirmation page if provided.
+            if (confirmationUrl) {
+              setTimeout(() => { window.location.href = confirmationUrl; }, 900);
+            } else {
+              busy.restore('Send Message');
+            }
+          } else {
+            const errMsg = (response && response.data)
+              ? (typeof response.data === 'string' ? response.data : (response.data.message || 'Something went wrong.'))
+              : 'Something went wrong.';
+            setStatus(errMsg, 'error');
+            busy.restore('Send Message');
+          }
+        })
+        .catch(() => {
+          setStatus('Network error. Please try again.', 'error');
+          busy.restore('Send Message');
+        });
     });
   }
 
   /* ───────────────────────────────────────────────────────────────────────────
-     Newsletter forms
+     Newsletter forms — AJAX submission
      ─────────────────────────────────────────────────────────────────────────── */
   const newsletterForms = $$('.js-newsletter-form');
   newsletterForms.forEach((form) => {
+    const status = form.parentElement?.querySelector('.js-newsletter-status');
+
+    function setStatus(message, kind) {
+      if (!status) return;
+      status.textContent = message;
+      status.classList.remove('is-success', 'is-error');
+      if (kind) status.classList.add('is-' + kind);
+    }
+
     form.addEventListener('submit', (event) => {
       event.preventDefault();
       const input = form.querySelector('input[type="email"]');
       const button = form.querySelector('button[type="submit"]');
       if (!input || !input.value.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value)) {
         input.classList.add('form-input-error');
+        input.setAttribute('aria-invalid', 'true');
+        setStatus('Please enter a valid email address.', 'error');
         return;
       }
       input.classList.remove('form-input-error');
-      if (button) {
-        const original = button.textContent;
-        button.textContent = 'Joined!';
-        button.disabled = true;
-        setTimeout(() => {
-          button.textContent = original;
-          button.disabled = false;
-          input.value = '';
-        }, 2500);
-      }
+      input.removeAttribute('aria-invalid');
+
+      const busy = setButtonBusy(button, 'Joining…');
+      setStatus('', null);
+
+      const action = form.dataset.ajaxAction || 'ripper_sports_newsletter';
+      ajaxPost(action, { email: input.value.trim() })
+        .then((response) => {
+          if (response && response.success) {
+            const msg = (response.data && typeof response.data === 'string')
+              ? response.data
+              : 'You\'re on the team.';
+            setStatus(msg, 'success');
+            input.value = '';
+            busy.restore('Joined!');
+            // Restore the original button label after a beat so the form
+            // is ready for another subscription.
+            setTimeout(() => busy.restore(), 2500);
+          } else {
+            const errMsg = (response && response.data)
+              ? (typeof response.data === 'string' ? response.data : 'Something went wrong.')
+              : 'Something went wrong.';
+            setStatus(errMsg, 'error');
+            busy.restore('Subscribe');
+          }
+        })
+        .catch(() => {
+          setStatus('Network error. Please try again.', 'error');
+          busy.restore('Subscribe');
+        });
     });
   });
 
@@ -271,6 +392,14 @@
       border-color: var(--rs-error) !important;
       box-shadow: 0 0 0 3px rgba(255, 180, 171, 0.4) !important;
     }
+    .js-form-status, .js-newsletter-status {
+      margin-top: 0.75rem;
+      font-size: 0.875rem;
+      font-family: var(--font-mono);
+    }
+    .js-form-status:empty, .js-newsletter-status:empty { display: none; }
+    .js-form-status.is-success, .js-newsletter-status.is-success { color: #6FCF97; }
+    .js-form-status.is-error,   .js-newsletter-status.is-error   { color: var(--rs-error); }
   `;
   document.head.appendChild(inputErrorStyle);
 
@@ -498,21 +627,84 @@
 
   /* ───────────────────────────────────────────────────────────────────────────
      Card reactions
-     ─────────────────────────────────────────────────────────────────────────── */
+     ───────────────────────────────────────────────────────────────────────────
+     Posts a reaction to the server via AJAX. Server-side handler
+     increments _rs_{type}_count and returns the new count.
+
+     A11y: each reaction is a button with aria-pressed; after a successful
+     reaction we announce the new count via a polite live region so
+     screen-reader users get feedback without context loss.
+  */
+  const reactionAnnouncer = document.createElement('div');
+  reactionAnnouncer.setAttribute('role', 'status');
+  reactionAnnouncer.setAttribute('aria-live', 'polite');
+  reactionAnnouncer.setAttribute('aria-atomic', 'true');
+  reactionAnnouncer.className = 'sr-only';
+  document.body.appendChild(reactionAnnouncer);
+
+  function announce(message) {
+    // Clear first so identical messages still fire the live region.
+    reactionAnnouncer.textContent = '';
+    setTimeout(() => { reactionAnnouncer.textContent = message; }, 30);
+  }
+
   $$('.card-reaction').forEach((btn) => {
     btn.addEventListener('click', (event) => {
       event.preventDefault();
       event.stopPropagation();
-      if (btn.dataset.reacted) return;
+
+      // Already reacted this session — bail out.
+      if (btn.dataset.reacted === 'true') return;
+
+      const card = btn.closest('.card');
+      const postId = card?.dataset.postId;
+      const type   = btn.dataset.reactionType || 'like';
+
+      // Mark optimistically.
       btn.dataset.reacted = 'true';
-      btn.classList.add('is-active');
-      const countEl = btn.querySelector('.card-reaction-count');
-      if (countEl) {
-        const current = parseInt(countEl.textContent.replace(/\D/g, ''), 10) || 0;
-        countEl.textContent = String(current + 1);
-      }
+      btn.classList.add('is-pending');
+      btn.setAttribute('aria-busy', 'true');
+
+      ajaxPost('ripper_sports_reaction', {
+        post_id: postId,
+        type:    type,
+        nonce:   ajaxData.reactionNonce || '',
+      })
+        .then((response) => {
+          btn.classList.remove('is-pending');
+          btn.removeAttribute('aria-busy');
+          if (response && response.success) {
+            btn.classList.add('is-active', 'is-success');
+            btn.setAttribute('aria-pressed', 'true');
+            const countEl = btn.querySelector('.card-reaction-count');
+            if (countEl && response.data && typeof response.data.count === 'number') {
+              countEl.textContent = String(response.data.count);
+            }
+            const labels = { like: 'Like', share: 'Share', comment: 'Comment' };
+            const noun = (countEl && parseInt(countEl.textContent, 10) === 1) ? 'reaction' : 'reactions';
+            announce(`${labels[type] || 'Reaction'} recorded. ${countEl ? countEl.textContent : ''} ${noun} total.`);
+          } else {
+            // Roll back optimistic state on failure.
+            btn.dataset.reacted = '';
+            btn.classList.remove('is-active');
+            const msg = (response && response.data)
+              ? (typeof response.data === 'string' ? response.data : 'Could not record reaction.')
+              : 'Could not record reaction.';
+            announce(msg);
+          }
+        })
+        .catch(() => {
+          btn.classList.remove('is-pending', 'is-active');
+          btn.removeAttribute('aria-busy');
+          btn.dataset.reacted = '';
+          announce('Network error. Reaction not recorded.');
+        });
+
+      // Brief visual flash even before server responds.
       setTimeout(() => btn.classList.remove('is-active'), 400);
     });
+
+    // Keyboard: Enter / Space already trigger click on <button>, no extra work.
   });
 
   /* ───────────────────────────────────────────────────────────────────────────
@@ -549,34 +741,98 @@
   });
 
   /* ───────────────────────────────────────────────────────────────────────────
-     Utility: current nav item highlight based on URL
-     ─────────────────────────────────────────────────────────────────────────── */
+     Utility: current nav item highlight
+     ───────────────────────────────────────────────────────────────────────────
+     WordPress renders contextual body classes via body_class() — e.g.
+       home, page-id-42, single-post, category-news, tax-sport, ...
+     We map those to a single nav key and add is-active to the matching
+     .primary-nav-link. Falls back to the URL pathname for cases where
+     body classes aren't enough (rare edge cases on custom post types).
+  */
   function setActiveNav() {
-    const path = window.location.pathname;
-    const page = path.split('/').pop() || 'index.html';
+    const bodyClasses = (ajaxData.bodyClasses || document.body.className || '').toLowerCase();
 
-    const map = {
-      'index.html': 'home',
-      'news.html': 'news',
-      'article.html': 'news',
-      'sports.html': 'sports',
-      'sport-archive.html': 'sports',
-      'blog.html': 'blog',
-      'blog-post.html': 'blog',
-      'contact.html': 'contact',
-      'contact-confirmation.html': 'contact',
-      'about.html': 'about',
-      'privacy.html': 'legal',
-      'terms.html': 'legal'
-    };
+    // Priority order matters: more-specific first.
+    const map = [
+      { key: 'sports',         test: /\btax-sport\b/ },
+      { key: 'sports',         test: /\bpage-id-.*sport\b/ },
+      { key: 'news',           test: /\b(category|single-post|archive|tag)\b/ },
+      { key: 'contact',        test: /\bpage-contact\b/ },
+      { key: 'about',          test: /\bpage-about\b/ },
+      { key: 'home',           test: /\b(home|front-page)\b/ },
+    ];
 
-    const activeKey = map[page];
+    let activeKey = null;
+    for (let i = 0; i < map.length; i++) {
+      if (map[i].test.test(bodyClasses)) { activeKey = map[i].key; break; }
+    }
+
+    // Fallback: parse the URL.
+    if (!activeKey) {
+      const path = window.location.pathname.toLowerCase();
+      if (path === '/' || path.endsWith('/index.php')) activeKey = 'home';
+      else if (path.includes('/sport/'))               activeKey = 'sports';
+      else if (path.includes('/category/') || path.includes('/tag/') || path.includes('/news')) activeKey = 'news';
+      else if (path.includes('/contact'))              activeKey = 'contact';
+      else if (path.includes('/about'))                activeKey = 'about';
+    }
+
     if (!activeKey) return;
 
-    $$(`.js-nav-${activeKey}`).forEach((el) => el.classList.add('is-active'));
+    $$(`.js-nav-${activeKey}`).forEach((el) => {
+      el.classList.add('is-active');
+      // Mirror to mobile nav if present.
+      const mobileSelector = `.js-mobile-nav .js-nav-${activeKey}`;
+      $$(mobileSelector).forEach((m) => m.classList.add('is-active'));
+    });
   }
 
   setActiveNav();
+
+  /* ───────────────────────────────────────────────────────────────────────────
+     Nav rail — sliding gold underline beneath the active pill
+     ───────────────────────────────────────────────────────────────────────────
+     Measures each .primary-nav-link in the desktop row and writes the rail's
+     translate3d + scaleX so it snaps under the current item. Re-measured on
+     resize (debounced) and after setActiveNav(), since the active class
+     affects the pill's visual width. */
+  function setupNavRail() {
+    const rail = $('.js-nav-rail');
+    if (!rail) return;
+
+    const list = $('.primary-nav-list');
+    if (!list) return;
+
+    function positionRail() {
+      const active = list.querySelector('.primary-nav-link.is-active')
+        || list.querySelector('.primary-nav-link');
+      if (!active) {
+        rail.style.transform = 'translate3d(0, -50%, 0) scaleX(0)';
+        return;
+      }
+      const listRect = list.getBoundingClientRect();
+      const itemRect = active.getBoundingClientRect();
+      const x = itemRect.left - listRect.left;
+      const w = itemRect.width;
+      rail.style.transform = `translate3d(${x}px, -50%, 0) scaleX(${w})`;
+    }
+
+    // Wait one frame so the active class from setActiveNav has applied before measuring.
+    requestAnimationFrame(positionRail);
+
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+      if (resizeTimer) cancelAnimationFrame(resizeTimer);
+      resizeTimer = requestAnimationFrame(positionRail);
+    });
+
+    // Re-position when fonts finish loading (font swap changes widths).
+    if (document.fonts && typeof document.fonts.ready === 'object') {
+      document.fonts.ready.then(positionRail).catch(() => {});
+    }
+  }
+
+  setupNavRail();
 
   /* ───────────────────────────────────────────────────────────────────────────
      CNN-style Live Match Ticker (count-up + count-down clocks)
