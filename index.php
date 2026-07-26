@@ -8,10 +8,10 @@
 get_header();
 ?>
 
-<main id="main-content" class="section">
+<main id="main-content" class="section" data-drift="0.04">
   <div class="container">
-    <header class="page-header mb-8">
-      <h1 class="section-title"><?php single_post_title(); ?></h1>
+    <header class="page-header page-header--accent mb-8 reveal">
+      <h1 class="text-display text-cream"><?php single_post_title(); ?></h1>
     </header>
 
     <?php
@@ -23,7 +23,7 @@ get_header();
     );
     if ( ! empty( $sport_terms ) && ! is_wp_error( $sport_terms ) ) :
       ?>
-      <div class="topic-pills mb-8" aria-label="<?php esc_attr_e( 'Topics', 'ripper-sports' ); ?>">
+      <div class="topic-pills mb-8 reveal-stagger" aria-label="<?php esc_attr_e( 'Topics', 'ripper-sports' ); ?>">
         <?php foreach ( $sport_terms as $sport_term ) : ?>
           <button class="tag js-topic-pill" type="button"><?php echo esc_html( $sport_term->name ); ?></button>
         <?php endforeach; ?>
@@ -32,7 +32,7 @@ get_header();
     endif;
     ?>
 
-    <div class="grid-auto">
+    <div class="grid-auto reveal-stagger">
       <?php
       if ( have_posts() ) :
         while ( have_posts() ) :

@@ -26,15 +26,15 @@ $default_image = 'https://images.unsplash.com/photo-1518605348738-4faafbd0945d?a
 
 
 <main id="main-content">
-  <section class="section">
+  <section class="section" data-drift="0.04">
     <div class="container">
-      <div class="page-header">
+      <div class="page-header reveal">
         <span class="page-kicker"><?php esc_html_e( 'The Ultimate Arena', 'ripper-sports' ); ?></span>
         <h1 class="page-title"><?php the_title(); ?></h1>
       </div>
 
       <?php if ( ! empty( $sports ) && ! is_wp_error( $sports ) ) : ?>
-        <div class="grid-auto">
+        <div class="grid-auto reveal-stagger">
           <?php foreach ( $sports as $sport ) : ?>
             <?php
             $tid = (int) $sport->term_id;
@@ -83,7 +83,7 @@ $default_image = 'https://images.unsplash.com/photo-1518605348738-4faafbd0945d?a
   <!-- Newsletter CTA -->
   <section class="section">
     <div class="container">
-      <div class="bg-surface-container-high p-8 md-p-12 border border-white-10 relative overflow-hidden">
+      <div class="bg-surface-container-high p-8 md-p-12 border border-white-10 relative overflow-hidden reveal-scale">
         <div class="relative z-10 max-w-2xl">
           <h2 class="text-headline-md text-gold uppercase mb-4"><?php esc_html_e( 'Data-Driven Insights', 'ripper-sports' ); ?></h2>
           <p class="text-body-lg text-muted mb-8"><?php esc_html_e( 'Get the scoreboard-level analytics and professional commentary delivered straight to your inbox every morning.', 'ripper-sports' ); ?></p>

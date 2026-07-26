@@ -13,11 +13,11 @@
 get_header();
 ?>
 <main id="main-content">
-	<section class="section">
+	<section class="section" data-drift="0.04">
 		<div class="container">
 			<?php /* Breadcrumbs removed per UX: keep the confirmation hero clean. */ ?>
 
-			<header class="page-header page-header--accent">
+			<header class="page-header page-header--accent reveal-scale">
 				<span class="tag"><?php esc_html_e( 'Message Received', 'ripper-sports' ); ?></span>
 				<h1 class="text-display text-gold"><?php esc_html_e( "Thanks — we'll be in touch.", 'ripper-sports' ); ?></h1>
 				<p class="text-body-lg text-muted">
@@ -32,9 +32,10 @@ get_header();
 			<section class="section mt-12">
 				<?php
 				set_query_var( 'title', __( 'Recommended reading', 'ripper-sports' ) );
+				set_query_var( 'title_class', 'reveal' );
 				get_template_part( 'template-parts/section-heading' );
 				?>
-				<div class="grid-auto">
+				<div class="grid-auto reveal-stagger">
 					<?php
 					$rec = new WP_Query(
 						array(

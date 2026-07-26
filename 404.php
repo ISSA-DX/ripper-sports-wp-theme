@@ -25,8 +25,8 @@ $ripper_404_recent = new WP_Query(
 
 <main id="main-content">
 	<!-- Editorial 404 hero -->
-	<section class="error-hero">
-		<div class="container error-hero-inner">
+	<section class="error-hero" data-drift="0.05">
+		<div class="container error-hero-inner reveal-scale">
 			<span class="error-kicker"><?php esc_html_e( '404 · Bench warmer', 'ripper-sports' ); ?></span>
 			<h1 class="error-headline">
 				<span class="error-headline-line"><?php esc_html_e( 'This play', 'ripper-sports' ); ?></span>
@@ -65,11 +65,11 @@ $ripper_404_recent = new WP_Query(
 		<!-- Recent stories — keep the user engaged -->
 		<section class="section bg-primary-container border-y border-white-10">
 			<div class="container">
-				<div class="section-header">
+				<div class="section-header reveal">
 					<h2 class="section-title text-gold"><?php esc_html_e( 'While You’re Here', 'ripper-sports' ); ?></h2>
 					<a href="<?php echo esc_url( get_post_type_archive_link( 'post' ) ); ?>" class="section-link"><?php esc_html_e( 'View All', 'ripper-sports' ); ?></a>
 				</div>
-				<div class="grid-3">
+				<div class="grid-3 reveal-stagger">
 					<?php
 					while ( $ripper_404_recent->have_posts() ) :
 						$ripper_404_recent->the_post();
@@ -85,7 +85,7 @@ $ripper_404_recent = new WP_Query(
 	<!-- Newsletter CTA — recover the bounce -->
 	<section class="section">
 		<div class="container">
-			<div class="bg-surface-container-high p-8 md-p-12 border border-white-10 relative overflow-hidden">
+			<div class="bg-surface-container-high p-8 md-p-12 border border-white-10 relative overflow-hidden reveal-scale">
 				<div class="relative z-10 max-w-2xl">
 					<h2 class="text-headline-md text-gold uppercase mb-4"><?php esc_html_e( 'Stay on the team sheet', 'ripper-sports' ); ?></h2>
 					<p class="text-body-lg text-muted mb-8"><?php esc_html_e( 'Get the scoreboard-level analytics and professional commentary delivered straight to your inbox every morning.', 'ripper-sports' ); ?></p>

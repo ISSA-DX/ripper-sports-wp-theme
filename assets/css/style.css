@@ -4216,6 +4216,11 @@ a.primary-nav-link.is-active::before {
 .reveal-stagger.is-visible > *:nth-child(6) { transition-delay: 400ms; opacity: 1; transform: translateY(0); }
 .reveal-stagger.is-visible > *:nth-child(7) { transition-delay: 480ms; opacity: 1; transform: translateY(0); }
 .reveal-stagger.is-visible > *:nth-child(8) { transition-delay: 560ms; opacity: 1; transform: translateY(0); }
+.reveal-stagger.is-visible > *:nth-child(9) { transition-delay: 620ms; opacity: 1; transform: translateY(0); }
+.reveal-stagger.is-visible > *:nth-child(10) { transition-delay: 680ms; opacity: 1; transform: translateY(0); }
+.reveal-stagger.is-visible > *:nth-child(11) { transition-delay: 720ms; opacity: 1; transform: translateY(0); }
+.reveal-stagger.is-visible > *:nth-child(12) { transition-delay: 760ms; opacity: 1; transform: translateY(0); }
+.reveal-stagger.is-visible > *:nth-child(n+13) { transition-delay: 800ms; opacity: 1; transform: translateY(0); }
 
 /* Decorative shimmer for featured cards */
 .card-featured::before {

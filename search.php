@@ -16,11 +16,11 @@ $result_count = (int) $GLOBALS['wp_query']->found_posts;
 $orderby     = isset( $_GET['orderby'] ) ? sanitize_key( wp_unslash( $_GET['orderby'] ) ) : 'date'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 ?>
 <main id="main-content">
-	<section class="section">
+	<section class="section" data-drift="0.04">
 		<div class="container">
-			<?php get_template_part( 'template-parts/breadcrumbs' ); ?>
+			<?php /* Breadcrumbs removed per UX: keep the hero clean. */ ?>
 
-			<header class="page-header page-header--accent search-hero">
+			<header class="page-header page-header--accent search-hero reveal">
 				<span class="tag"><?php esc_html_e( 'Search', 'ripper-sports' ); ?></span>
 				<h1 class="text-display text-cream">
 					<?php if ( $query ) : ?>
@@ -44,7 +44,7 @@ $orderby     = isset( $_GET['orderby'] ) ? sanitize_key( wp_unslash( $_GET['orde
 				</form>
 			</header>
 
-			<div class="search-toolbar flex flex-wrap items-center justify-between gap-3 mt-6 mb-8">
+			<div class="search-toolbar flex flex-wrap items-center justify-between gap-3 mt-6 mb-8 reveal">
 				<p class="text-body-md text-muted">
 					<?php
 					if ( $query ) {
@@ -69,7 +69,7 @@ $orderby     = isset( $_GET['orderby'] ) ? sanitize_key( wp_unslash( $_GET['orde
 				</form>
 			</div>
 
-			<div class="grid-2">
+			<div class="grid-2 reveal-stagger">
 				<?php
 				if ( have_posts() ) :
 					while ( have_posts() ) :

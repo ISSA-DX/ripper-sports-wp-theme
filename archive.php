@@ -8,12 +8,12 @@
 get_header();
 ?>
 
-<main id="main-content" class="section">
+<main id="main-content" class="section" data-drift="0.04">
   <div class="container">
-    <header class="page-header mb-8">
+    <header class="page-header page-header--accent mb-8 reveal">
       <?php
-      the_archive_title( '<h1 class="section-title">', '</h1>' );
-      the_archive_description( '<p class="text-body-md text-muted">', '</p>' );
+      the_archive_title( '<h1 class="text-display text-cream">', '</h1>' );
+      the_archive_description( '<p class="text-body-lg text-muted">', '</p>' );
       ?>
     </header>
 
@@ -35,7 +35,7 @@ get_header();
     endif;
     ?>
 
-    <div class="grid-auto">
+    <div class="grid-auto reveal-stagger">
       <?php
       if ( have_posts() ) :
         while ( have_posts() ) :

@@ -10,11 +10,11 @@ get_header();
 $author_id = get_queried_object_id();
 ?>
 <main id="main-content">
-	<section class="section">
+	<section class="section" data-drift="0.04">
 		<div class="container">
-			<?php get_template_part( 'template-parts/breadcrumbs' ); ?>
+			<?php /* Breadcrumbs removed per UX */ ?>
 
-			<header class="page-header page-header--accent flex flex-col md-flex-row gap-6 md-items-center">
+			<header class="page-header page-header--accent flex flex-col md-flex-row gap-6 md-items-center reveal">
 				<?php echo get_avatar( $author_id, 96, '', '', array( 'class' => 'rounded-full' ) ); ?>
 				<div>
 					<span class="tag"><?php esc_html_e( 'Author', 'ripper-sports' ); ?></span>
@@ -25,7 +25,7 @@ $author_id = get_queried_object_id();
 				</div>
 			</header>
 
-			<div class="grid-auto mt-8">
+			<div class="grid-auto mt-8 reveal-stagger">
 				<?php
 				if ( have_posts() ) :
 					while ( have_posts() ) :

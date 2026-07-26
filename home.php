@@ -13,14 +13,15 @@ get_header();
 ?>
 
 <main id="main-content">
-	<section class="section">
+	<section class="section" data-drift="0.04">
 		<div class="container">
 			<?php
 			set_query_var( 'title', __( 'Latest News', 'ripper-sports' ) );
+			set_query_var( 'title_class', 'reveal' );
 			set_query_var( 'view_all_url', '' );
 			get_template_part( 'template-parts/section-heading' );
 			?>
-			<div class="grid-auto">
+			<div class="grid-auto reveal-stagger">
 				<?php
 				if ( have_posts() ) :
 					while ( have_posts() ) :

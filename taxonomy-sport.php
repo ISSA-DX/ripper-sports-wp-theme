@@ -14,12 +14,10 @@ get_header();
 $term = get_queried_object();
 ?>
 <main id="main-content">
-	<section class="section">
+	<section class="section" data-drift="0.04">
 		<div class="container">
-			<?php /* Breadcrumbs removed per UX: keep the hero clean, no 'Home / AFL' trail. */ ?>
-
 			<?php if ( $term && ! is_wp_error( $term ) ) : ?>
-				<header class="page-header page-header--accent">
+				<header class="page-header page-header--accent reveal">
 					<span class="tag"><?php esc_html_e( 'Sport Archive', 'ripper-sports' ); ?></span>
 					<h1 class="text-display text-cream"><?php echo esc_html( $term->name ); ?> <?php esc_html_e( 'News', 'ripper-sports' ); ?></h1>
 					<?php if ( ! empty( $term->description ) ) : ?>
@@ -39,10 +37,12 @@ $term = get_queried_object();
 			<?php endif; ?>
 
 			<div class="archive-layout">
-				<?php get_template_part( 'template-parts/sport-filter-sidebar' ); ?>
+				<aside class="reveal-left">
+					<?php get_template_part( 'template-parts/sport-filter-sidebar' ); ?>
+				</aside>
 
-				<div class="archive-content">
-					<div class="grid-2">
+				<div class="archive-content reveal-right">
+					<div class="grid-2 reveal-stagger">
 						<?php
 						if ( have_posts() ) :
 							while ( have_posts() ) :

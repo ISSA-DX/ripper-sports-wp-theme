@@ -11,9 +11,9 @@ get_header();
 ?>
 
 <!-- Page title -->
-<section class="relative pt-32 pb-16 md-pt-40 md-pb-24 bg-gradient-to-b from-shield-20 to-background border-b border-white-10">
+<section class="relative pt-32 pb-16 md-pt-40 md-pb-24 bg-gradient-to-b from-shield-20 to-background border-b border-white-10" data-drift="0.04">
   <div class="container">
-    <div class="max-w-3xl">
+    <div class="max-w-3xl reveal">
       <span class="tag mb-4"><?php esc_html_e( 'Contact', 'ripper-sports' ); ?></span>
       <h1 class="text-display text-cream mb-6"><?php the_title(); ?></h1>
       <?php if ( has_excerpt() ) : ?>
@@ -34,7 +34,7 @@ get_header();
     <div class="grid grid-cols-1 lg-grid-cols-12 gap-6 items-start">
 
       <!-- Contact form -->
-      <section class="lg-col-span-8 bg-black-20 border border-white-10 p-6 md-p-10">
+      <section class="lg-col-span-8 bg-black-20 border border-white-10 p-6 md-p-10 reveal-left">
         <form class="js-contact-form space-y-6" action="#" method="post" novalidate data-ajax-action="ripper_sports_contact">
           <div class="grid grid-cols-1 md-grid-cols-2 gap-6">
             <div class="form-group">
@@ -96,7 +96,7 @@ get_header();
       </section>
 
       <!-- Sidebar -->
-      <aside class="lg-col-span-4 space-y-6">
+      <aside class="lg-col-span-4 space-y-6 reveal-right">
         <div class="bg-black-20 border border-white-10 p-6">
           <h2 class="text-headline-md text-cream mb-4"><?php esc_html_e( 'Other Ways to Reach Us', 'ripper-sports' ); ?></h2>
           <ul class="space-y-4 text-body-md text-muted">

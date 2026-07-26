@@ -14,12 +14,12 @@ get_header();
 $term = get_queried_object();
 ?>
 <main id="main-content">
-	<section class="section">
+	<section class="section" data-drift="0.04">
 		<div class="container">
-			<?php get_template_part( 'template-parts/breadcrumbs' ); ?>
+			<?php /* Breadcrumbs removed per UX */ ?>
 
 			<?php if ( $term && ! is_wp_error( $term ) ) : ?>
-				<header class="page-header page-header--accent">
+				<header class="page-header page-header--accent reveal">
 					<h1 class="text-display text-cream"><?php echo esc_html( single_term_title( '', false ) ); ?></h1>
 					<?php if ( ! empty( $term->description ) ) : ?>
 						<p class="text-body-lg text-muted"><?php echo esc_html( $term->description ); ?></p>
@@ -27,7 +27,7 @@ $term = get_queried_object();
 				</header>
 			<?php endif; ?>
 
-			<div class="grid-auto">
+			<div class="grid-auto reveal-stagger">
 				<?php
 				if ( have_posts() ) :
 					while ( have_posts() ) :

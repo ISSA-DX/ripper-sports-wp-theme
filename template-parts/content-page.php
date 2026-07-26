@@ -6,9 +6,9 @@
  */
 ?>
 
-<main id="main-content" class="section">
+<main id="main-content" class="section" data-drift="0.04">
   <div class="container">
-    <article class="editorial-content max-w-4xl mx-auto">
+    <article class="editorial-content max-w-4xl mx-auto reveal">
       <header class="mb-10">
         <?php the_title( '<h1 class="text-display text-gold mb-4">', '</h1>' ); ?>
       </header>
